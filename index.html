@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文本文件分享</title>
     <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-hover: #45a049;
+            --text-color: #333;
+            --text-secondary: #666;
+            --text-muted: #999;
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --border-color: #ddd;
+            --error-color: #f44336;
+            --warning-color: #ff9800;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,144 +25,329 @@
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
+            background: var(--bg-color);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 16px;
+        }
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+            }
         }
         .container {
-            background: white;
-            padding: 40px;
+            background: var(--card-bg);
+            padding: 24px;
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             width: 100%;
             max-width: 450px;
         }
+        @media (min-width: 768px) {
+            .container {
+                padding: 40px;
+            }
+        }
         h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 24px;
+            color: var(--text-color);
+            margin-bottom: 8px;
+            font-size: 20px;
+        }
+        @media (min-width: 768px) {
+            h1 {
+                font-size: 24px;
+                margin-bottom: 10px;
+            }
         }
         p.subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        @media (min-width: 768px) {
+            p.subtitle {
+                margin-bottom: 30px;
+                font-size: 14px;
+            }
         }
         .upload-area {
-            border: 2px dashed #ddd;
+            border: 2px dashed var(--border-color);
             border-radius: 8px;
-            padding: 40px 20px;
+            padding: 30px 16px;
             text-align: center;
             cursor: pointer;
-            transition: border-color 0.3s;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+        @media (min-width: 768px) {
+            .upload-area {
+                padding: 40px 20px;
+            }
         }
         .upload-area:hover {
-            border-color: #4CAF50;
+            border-color: var(--primary-color);
         }
         .upload-area.dragover {
-            border-color: #4CAF50;
+            border-color: var(--primary-color);
             background: #f0f9f0;
         }
         .upload-area input {
             display: none;
         }
         .upload-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+        @media (min-width: 768px) {
+            .upload-icon {
+                font-size: 48px;
+                margin-bottom: 15px;
+            }
         }
         .upload-text {
-            color: #666;
-            font-size: 14px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        @media (min-width: 768px) {
+            .upload-text {
+                font-size: 14px;
+            }
         }
         .upload-text strong {
-            color: #4CAF50;
+            color: var(--primary-color);
         }
         .file-info {
             display: none;
-            margin-top: 20px;
-            padding: 15px;
+            margin-top: 16px;
+            padding: 12px;
             background: #f9f9f9;
             border-radius: 8px;
+        }
+        @media (min-width: 768px) {
+            .file-info {
+                margin-top: 20px;
+                padding: 15px;
+            }
         }
         .file-info.show {
             display: block;
         }
         .file-name {
-            color: #333;
+            color: var(--text-color);
             font-weight: 500;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
+            font-size: 14px;
+            word-break: break-word;
         }
         .file-size {
-            color: #999;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+        .options {
+            margin-top: 16px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        @media (min-width: 768px) {
+            .options {
+                margin-top: 20px;
+                padding: 15px;
+            }
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
             font-size: 13px;
+            color: var(--text-secondary);
+            position: relative;
+            gap: 12px;
+        }
+        @media (min-width: 768px) {
+            .checkbox-label {
+                font-size: 14px;
+                gap: 15px;
+            }
+        }
+        .checkbox-label-text {
+            flex: 1;
+            line-height: 1.4;
+        }
+        .checkbox-label input {
+            display: none;
+        }
+        .checkbox-label:hover {
+            color: var(--primary-color);
+        }
+        /* 开关样式 */
+        .switch-slider {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+            background-color: #ccc;
+            border-radius: 24px;
+            transition: .3s;
+            cursor: pointer;
+        }
+        @media (min-width: 768px) {
+            .switch-slider {
+                width: 50px;
+                height: 26px;
+            }
+        }
+        .switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        @media (min-width: 768px) {
+            .switch-slider:before {
+                height: 20px;
+                width: 20px;
+            }
+        }
+        .checkbox-label input:checked + .switch-slider {
+            background-color: var(--primary-color);
+        }
+        .checkbox-label input:checked + .switch-slider:before {
+            transform: translateX(20px);
+        }
+        @media (min-width: 768px) {
+            .checkbox-label input:checked + .switch-slider:before {
+                transform: translateX(24px);
+            }
         }
         .btn {
             width: 100%;
-            padding: 14px;
-            background: #4CAF50;
+            padding: 12px 20px;
+            background: var(--primary-color);
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 15px;
+            font-weight: 500;
             cursor: pointer;
-            margin-top: 20px;
-            transition: background 0.3s;
+            margin-top: 16px;
+            transition: background 0.3s, transform 0.1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        @media (min-width: 768px) {
+            .btn {
+                padding: 14px;
+                font-size: 16px;
+                margin-top: 20px;
+            }
         }
         .btn:hover {
-            background: #45a049;
+            background: var(--primary-hover);
+        }
+        .btn:active {
+            transform: scale(0.98);
         }
         .btn:disabled {
             background: #ccc;
             cursor: not-allowed;
+            transform: none;
         }
         .result {
             display: none;
-            margin-top: 25px;
-            padding-top: 25px;
+            margin-top: 20px;
+            padding-top: 20px;
             border-top: 1px solid #eee;
+        }
+        @media (min-width: 768px) {
+            .result {
+                margin-top: 25px;
+                padding-top: 25px;
+            }
         }
         .result.show {
             display: block;
         }
         .result-label {
-            color: #666;
-            font-size: 13px;
+            color: var(--text-secondary);
+            font-size: 12px;
             margin-bottom: 8px;
+        }
+        @media (min-width: 768px) {
+            .result-label {
+                font-size: 13px;
+            }
         }
         .result-url {
             background: #f5f5f5;
-            padding: 12px;
+            padding: 10px 12px;
             border-radius: 6px;
             word-break: break-all;
             font-family: monospace;
-            font-size: 14px;
-            color: #4CAF50;
+            font-size: 13px;
+            color: var(--primary-color);
+            border: 1px solid #eee;
+        }
+        @media (min-width: 768px) {
+            .result-url {
+                padding: 12px;
+                font-size: 14px;
+            }
         }
         .result-actions {
-            display: flex;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
             margin-top: 10px;
         }
+        @media (min-width: 768px) {
+            .result-actions {
+                display: flex;
+                gap: 10px;
+            }
+        }
         .btn-small {
-            flex: 1;
-            padding: 10px;
-            font-size: 14px;
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+        @media (min-width: 768px) {
+            .btn-small {
+                padding: 10px;
+                font-size: 14px;
+            }
         }
         .btn-outline {
             background: transparent;
-            border: 1px solid #ddd;
-            color: #666;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
         }
         .btn-outline:hover {
             background: #f5f5f5;
         }
         .error {
-            color: #f44336;
-            font-size: 14px;
-            margin-top: 10px;
+            color: var(--error-color);
+            font-size: 13px;
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: #ffebee;
+            border-radius: 6px;
             display: none;
+        }
+        @media (min-width: 768px) {
+            .error {
+                font-size: 14px;
+                margin-top: 10px;
+            }
         }
         .error.show {
             display: block;
@@ -157,12 +355,40 @@
         .loading {
             display: none;
             text-align: center;
-            color: #666;
-            font-size: 14px;
-            margin-top: 15px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 12px;
+        }
+        @media (min-width: 768px) {
+            .loading {
+                font-size: 14px;
+                margin-top: 15px;
+            }
         }
         .loading.show {
             display: block;
+        }
+        /* 加载动画 */
+        .loading::before {
+            content: '';
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--text-secondary);
+            border-top-color: transparent;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+            animation: spin 0.8s linear infinite;
+        }
+        @media (min-width: 768px) {
+            .loading::before {
+                width: 16px;
+                height: 16px;
+            }
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -185,6 +411,14 @@
                 <div class="file-size" id="fileSize"></div>
             </div>
 
+            <div class="options" id="options" style="display: none;">
+                <label class="checkbox-label">
+                    <span class="checkbox-label-text">🔥 阅后即焚<br><small style="font-size: 11px; opacity: 0.8;">文件访问一次后自动删除</small></span>
+                    <input type="checkbox" id="onceCheckbox">
+                    <span class="switch-slider"></span>
+                </label>
+            </div>
+
             <p class="error" id="error"></p>
 
             <button type="submit" class="btn" id="uploadBtn" disabled>上传</button>
@@ -195,6 +429,9 @@
         <div class="result" id="result">
             <div class="result-label">Raw 链接：</div>
             <div class="result-url" id="resultUrl"></div>
+            <div id="onceTip" style="color: var(--warning-color); font-size: 11px; margin-top: 8px; display: none; line-height: 1.4;">
+                🔒 此链接为阅后即焚，访问一次后将自动删除
+            </div>
             <div class="result-actions">
                 <button class="btn btn-small btn-outline" id="copyBtn">复制链接</button>
                 <button class="btn btn-small" id="openBtn">在新窗口打开</button>
@@ -208,12 +445,15 @@
         const fileInfo = document.getElementById('fileInfo');
         const fileName = document.getElementById('fileName');
         const fileSize = document.getElementById('fileSize');
+        const options = document.getElementById('options');
+        const onceCheckbox = document.getElementById('onceCheckbox');
         const uploadBtn = document.getElementById('uploadBtn');
         const uploadForm = document.getElementById('uploadForm');
         const error = document.getElementById('error');
         const loading = document.getElementById('loading');
         const result = document.getElementById('result');
         const resultUrl = document.getElementById('resultUrl');
+        const onceTip = document.getElementById('onceTip');
         const copyBtn = document.getElementById('copyBtn');
         const openBtn = document.getElementById('openBtn');
 
@@ -274,6 +514,7 @@
             fileName.textContent = file.name;
             fileSize.textContent = formatSize(file.size);
             fileInfo.classList.add('show');
+            options.style.display = 'block';
             uploadBtn.disabled = false;
         }
 
@@ -299,6 +540,9 @@
 
             const formData = new FormData();
             formData.append('file', selectedFile);
+            if (onceCheckbox.checked) {
+                formData.append('once', 'true');
+            }
 
             try {
                 const response = await fetch('/upload', {
@@ -313,6 +557,11 @@
                 }
 
                 resultUrl.textContent = data.raw_url;
+                if (data.once) {
+                    onceTip.style.display = 'block';
+                } else {
+                    onceTip.style.display = 'none';
+                }
                 result.classList.add('show');
             } catch (err) {
                 showError(err.message);

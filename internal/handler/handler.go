@@ -1,41 +1,36 @@
 package handler
 
 import (
+	"database/sql"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"subserver/internal/file"
 )
 
 const (
-	uploadDir = "./uploads"
-	maxSize   = 1 << 20 // 1MB
+	maxSize = 1 << 20 // 1MB
 )
 
 // Handler HTTP 处理器
 type Handler struct {
-	uploadDir string
-	maxSize   int64
+	db      *sql.DB
+	maxSize int64
 }
 
 // NewHandler 创建新的 Handler
-func NewHandler() *Handler {
+func NewHandler(db *sql.DB) *Handler {
 	return &Handler{
-		uploadDir: uploadDir,
-		maxSize:   maxSize,
+		db:      db,
+		maxSize: maxSize,
 	}
-}
-
-// Index 上传页面
-func (h *Handler) Index(c *gin.Context) {
-	c.File("./index.html")
 }
 
 // UploadResponse 上传响应
 type UploadResponse struct {
 	ID     string `json:"id"`
 	RawURL string `json:"raw_url"`
+	Once   bool   `json:"once,omitempty"`
 }
 
 // Upload 文件上传处理
@@ -52,8 +47,11 @@ func (h *Handler) Upload(c *gin.Context) {
 		return
 	}
 
-	// 保存文件
-	upload, err := file.SaveFile(fileHeader, h.uploadDir)
+	// 获取阅后即焚选项
+	once := c.PostForm("once") == "true"
+
+	// 保存文件到数据库
+	upload, err := file.SaveFile(h.db, fileHeader, once)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "保存文件失败"})
 		return
@@ -64,6 +62,7 @@ func (h *Handler) Upload(c *gin.Context) {
 	c.JSON(http.StatusOK, UploadResponse{
 		ID:     upload.ID,
 		RawURL: rawURL,
+		Once:   once,
 	})
 }
 
@@ -71,32 +70,23 @@ func (h *Handler) Upload(c *gin.Context) {
 func (h *Handler) GetRawFile(c *gin.Context) {
 	id := c.Param("id")
 
-	// 查找文件
-	filePath, err := file.FindFileByID(h.uploadDir, id)
+	// 从数据库获取文件
+	f, err := file.GetFile(h.db, id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "文件不存在"})
 		return
 	}
 
-	// 打开文件
-	f, err := os.Open(filePath)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "读取文件失败"})
-		return
-	}
-	defer f.Close()
-
-	// 获取文件信息
-	stat, err := f.Stat()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "读取文件信息失败"})
+	// 文件不存在（可能是阅后即焚文件已被读取）
+	if f == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "文件不存在"})
 		return
 	}
 
 	// 设置响应头
 	c.Header("Content-Type", "text/plain; charset=utf-8")
 	c.Header("Content-Disposition", "inline")
-	c.DataFromReader(http.StatusOK, stat.Size(), "text/plain; charset=utf-8", f, nil)
+	c.Data(http.StatusOK, "text/plain; charset=utf-8", f.Content)
 }
 
 // getHost 获取当前请求的主机
@@ -106,6 +96,11 @@ func getHost(c *gin.Context) string {
 		return "http://localhost:8080"
 	}
 	return "http://" + host
+}
+
+// Index 上传页面
+func (h *Handler) Index(c *gin.Context) {
+	c.File("./index.html")
 }
 
 // RegisterRoutes 注册路由

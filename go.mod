@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	github.com/caddyserver/certmagic v0.25.0
 	github.com/gin-gonic/gin v1.11.0
+	github.com/google/uuid v1.6.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -26,6 +27,7 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/libdns/libdns v1.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-sqlite3 v1.14.34 // indirect
 	github.com/mholt/acmez/v3 v3.1.3 // indirect
 	github.com/miekg/dns v1.1.68 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

@@ -9,10 +9,11 @@ import (
 
 // Config 配置结构
 type Config struct {
-	Server ServerConfig `yaml:"server"`
-	TLS    TLSConfig    `yaml:"tls"`
-	DNS    DNSConfig    `yaml:"dns"`
-	Log    LogConfig    `yaml:"log"`
+	Server   ServerConfig   `yaml:"server"`
+	TLS      TLSConfig      `yaml:"tls"`
+	DNS      DNSConfig      `yaml:"dns"`
+	Log      LogConfig      `yaml:"log"`
+	Database DatabaseConfig `yaml:"database"`
 }
 
 // ServerConfig 服务器配置
@@ -52,6 +53,14 @@ type LogConfig struct {
 	Format string `yaml:"format"`
 }
 
+// DatabaseConfig 数据库配置
+type DatabaseConfig struct {
+	Type       string `yaml:"type"`
+	SQLitePath string `yaml:"sqlite_path"`
+	MySQL      string `yaml:"mysql"`
+	Postgres   string `yaml:"postgres"`
+}
+
 // DefaultConfig 返回默认配置
 func DefaultConfig() *Config {
 	return &Config{
@@ -68,6 +77,10 @@ func DefaultConfig() *Config {
 		Log: LogConfig{
 			Level:  "info",
 			Format: "text",
+		},
+		Database: DatabaseConfig{
+			Type:       "sqlite",
+			SQLitePath: "./data/subserver.db",
 		},
 	}
 }

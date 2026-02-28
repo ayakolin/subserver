@@ -1,14 +1,15 @@
 package file
 
 import (
-	"crypto/rand"
-	"encoding/hex"
+	"database/sql"
 	"fmt"
 	"io"
 	"mime/multipart"
-	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 // 允许的文件扩展名
@@ -46,15 +47,18 @@ var AllowedExts = map[string]bool{
 
 // FileUpload 文件上传结果
 type FileUpload struct {
-	ID       string
-	FilePath string
+	ID        string
+	Name      string
+	Content   []byte
+	Size      int64
+	MimeType  string
+	CreatedAt time.Time
+	Once      bool
 }
 
-// GenerateID 生成唯一的文件 ID
+// GenerateID 生成唯一的文件 ID (GUID 格式)
 func GenerateID() string {
-	b := make([]byte, 8)
-	rand.Read(b)
-	return hex.EncodeToString(b)
+	return uuid.New().String()
 }
 
 // ValidateFile 验证文件是否合法
@@ -74,16 +78,10 @@ func ValidateFile(file *multipart.FileHeader, maxSize int64) error {
 	return nil
 }
 
-// SaveFile 保存上传的文件
-func SaveFile(file *multipart.FileHeader, uploadDir string) (*FileUpload, error) {
+// SaveFile 保存上传的文件到数据库
+func SaveFile(db *sql.DB, file *multipart.FileHeader, once bool) (*FileUpload, error) {
 	// 生成唯一 ID
 	id := GenerateID()
-	fileext := filepath.Ext(file.Filename)
-	if fileext == "" {
-		fileext = ".config"
-	}
-	filename := id + fileext
-	filepath := filepath.Join(uploadDir, filename)
 
 	// 打开上传的文件
 	src, err := file.Open()
@@ -92,36 +90,138 @@ func SaveFile(file *multipart.FileHeader, uploadDir string) (*FileUpload, error)
 	}
 	defer src.Close()
 
-	// 创建目标文件
-	dst, err := os.Create(filepath)
+	// 读取文件内容
+	content, err := io.ReadAll(src)
 	if err != nil {
-		return nil, fmt.Errorf("创建文件失败：%w", err)
+		return nil, fmt.Errorf("读取文件内容失败：%w", err)
 	}
-	defer dst.Close()
 
-	// 复制文件内容
-	if _, err := io.Copy(dst, src); err != nil {
-		return nil, fmt.Errorf("保存文件失败：%w", err)
+	// 保存到数据库
+	query := `
+	INSERT INTO files (id, name, content, size, mime_type, created_at, once, read_count)
+	VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+	`
+
+	_, err = db.Exec(query, id, file.Filename, content, file.Size, getMimeType(file.Filename), time.Now(), once)
+	if err != nil {
+		return nil, fmt.Errorf("保存文件到数据库失败：%w", err)
 	}
 
 	return &FileUpload{
-		ID:       id,
-		FilePath: filepath,
+		ID:        id,
+		Name:      file.Filename,
+		Content:   content,
+		Size:      file.Size,
+		MimeType:  getMimeType(file.Filename),
+		CreatedAt: time.Now(),
+		Once:      once,
 	}, nil
 }
 
-// FindFileByID 根据 ID 查找文件
-func FindFileByID(uploadDir, id string) (string, error) {
-	entries, err := os.ReadDir(uploadDir)
+// GetFile 从数据库获取文件
+func GetFile(db *sql.DB, id string) (*FileUpload, error) {
+	// 使用事务来确保原子性
+	tx, err := db.Begin()
 	if err != nil {
-		return "", err
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// 先查询文件信息和读取次数
+	query := `
+	SELECT id, name, content, size, mime_type, created_at, once, read_count
+	FROM files
+	WHERE id = ?
+	`
+
+	var f FileUpload
+	var once bool
+	var readCount int
+	err = tx.QueryRow(query, id).Scan(
+		&f.ID,
+		&f.Name,
+		&f.Content,
+		&f.Size,
+		&f.MimeType,
+		&f.CreatedAt,
+		&once,
+		&readCount,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
 	}
 
-	for _, entry := range entries {
-		if !entry.IsDir() && strings.HasPrefix(entry.Name(), id+".") {
-			return filepath.Join(uploadDir, entry.Name()), nil
+	if err != nil {
+		return nil, err
+	}
+
+	f.Once = once
+
+	// 如果是阅后即焚文件且已经读取过 (read_count >= 1)，返回文件不存在
+	if once && readCount >= 1 {
+		return nil, nil
+	}
+
+	// 增加读取次数
+	_, err = tx.Exec(`UPDATE files SET read_count = read_count + 1 WHERE id = ?`, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// 如果是阅后即焚文件，删除文件
+	if once {
+		_, err = tx.Exec(`DELETE FROM files WHERE id = ?`, id)
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	return "", fmt.Errorf("文件不存在")
+	// 提交事务
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return &f, nil
+}
+
+// getMimeType 根据文件扩展名获取 MIME 类型
+func getMimeType(filename string) string {
+	ext := strings.ToLower(filepath.Ext(filename))
+	switch ext {
+	case ".yaml", ".yml":
+		return "application/x-yaml"
+	case ".json":
+		return "application/json"
+	case ".txt":
+		return "text/plain"
+	case ".toml":
+		return "application/toml"
+	case ".xml":
+		return "application/xml"
+	case ".ini":
+		return "text/plain"
+	case ".properties":
+		return "text/plain"
+	case ".env":
+		return "text/plain"
+	case ".conf", ".cfg", ".config":
+		return "text/plain"
+	case ".rc":
+		return "text/plain"
+	case ".csv":
+		return "text/csv"
+	case ".tsv":
+		return "text/tab-separated-values"
+	case ".sh", ".bash", ".zsh":
+		return "text/x-shellscript"
+	case "makefile", "gnumakefile":
+		return "text/plain"
+	case "dockerfile", ".dockerfile":
+		return "text/plain"
+	case "procfile", "gemfile", "rakefile":
+		return "text/plain"
+	default:
+		return "text/plain"
+	}
 }
