@@ -270,32 +270,6 @@
             flex: 1;
         }
 
-        .expire-picker-btn .clear-btn {
-            display: none;
-            width: 24px;
-            height: 24px;
-            padding: 0;
-            background: transparent;
-            color: var(--text-muted);
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 18px;
-            line-height: 1;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-
-        .expire-picker-btn .clear-btn:hover {
-            background: var(--border);
-            color: var(--text);
-        }
-
-        .expire-picker-btn.has-value .clear-btn {
-            display: flex;
-        }
 
         .expire-presets {
             display: flex;
@@ -742,7 +716,6 @@
                     <button type="button" class="expire-picker-btn disabled" id="expirePickerBtn">
                         <span class="icon">📅</span>
                         <span class="text">选择日期</span>
-                        <button type="button" class="clear-btn">&times;</button>
                     </button>
                     <div class="expire-presets">
                         <button type="button" class="preset-btn" data-seconds="60">1 分钟</button>
@@ -878,7 +851,6 @@
                 btn.classList.add('active');
 
                 expirePickerBtn.querySelector('.text').textContent = formatDate(selectedExpireDate);
-                expirePickerBtn.classList.add('has-value');
             });
         });
 
@@ -888,15 +860,6 @@
             const hour = date.getHours();
             const minute = date.getMinutes();
             return `${month}月${day}日 ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        }
-
-        function clearExpireSelection() {
-            selectedExpireDate = null;
-            selectedCalendarDate = null;
-            expirePickerBtn.classList.remove('has-value');
-            expirePickerBtn.querySelector('.text').textContent = '选择日期';
-            presetBtns.forEach(btn => btn.classList.remove('active'));
-            neverExpireCheckbox.checked = true;
         }
 
         expirePickerBtn.addEventListener('click', () => {
@@ -949,7 +912,6 @@
 
             neverExpireCheckbox.checked = false;
             expirePickerBtn.classList.remove('disabled');
-            expirePickerBtn.classList.add('has-value');
             expirePickerBtn.querySelector('.text').textContent = formatDate(selectedExpireDate);
             presetBtns.forEach(btn => btn.classList.remove('active'));
 
@@ -1014,11 +976,6 @@
         nextMonthBtn.addEventListener('click', () => {
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
             renderCalendar();
-        });
-
-        expirePickerBtn.querySelector('.clear-btn')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            clearExpireSelection();
         });
 
         function getExpireSeconds() {
