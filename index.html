@@ -6,16 +6,20 @@
     <title>文本文件分享</title>
     <style>
         :root {
-            --primary-color: #4CAF50;
-            --primary-hover: #45a049;
-            --text-color: #333;
-            --text-secondary: #666;
-            --text-muted: #999;
-            --bg-color: #f5f5f5;
-            --card-bg: #ffffff;
-            --border-color: #ddd;
-            --error-color: #f44336;
-            --warning-color: #ff9800;
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --primary-light: #d1fae5;
+            --text: #1f2937;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+            --bg: #f9fafb;
+            --card: #ffffff;
+            --border: #e5e7eb;
+            --error: #ef4444;
+            --error-bg: #fef2f2;
+            --warning: #f59e0b;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
         * {
@@ -23,432 +27,223 @@
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdf4 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 16px;
-        }
-        @media (min-width: 768px) {
-            body {
-                padding: 20px;
-            }
-        }
-        .container {
-            background: var(--card-bg);
             padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            line-height: 1.6;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
             width: 100%;
-            max-width: 450px;
+            max-width: 480px;
         }
-        @media (min-width: 768px) {
-            .container {
-                padding: 40px;
-            }
-        }
+
         h1 {
-            color: var(--text-color);
+            color: var(--text);
+            font-size: 24px;
+            font-weight: 600;
             margin-bottom: 8px;
-            font-size: 20px;
+            letter-spacing: -0.025em;
         }
-        @media (min-width: 768px) {
-            h1 {
-                font-size: 24px;
-                margin-bottom: 10px;
-            }
-        }
+
         p.subtitle {
             color: var(--text-secondary);
-            margin-bottom: 24px;
-            font-size: 13px;
-            line-height: 1.5;
+            font-size: 14px;
+            margin-bottom: 32px;
         }
-        @media (min-width: 768px) {
-            p.subtitle {
-                margin-bottom: 30px;
-                font-size: 14px;
-            }
-        }
+
         .upload-area {
-            border: 2px dashed var(--border-color);
-            border-radius: 8px;
-            padding: 30px 16px;
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 48px 24px;
             text-align: center;
             cursor: pointer;
-            transition: border-color 0.3s, background-color 0.3s;
+            transition: all 0.2s ease;
+            background: var(--bg);
         }
-        @media (min-width: 768px) {
-            .upload-area {
-                padding: 40px 20px;
-            }
-        }
+
         .upload-area:hover {
-            border-color: var(--primary-color);
+            border-color: var(--primary);
+            background: var(--primary-light);
         }
+
         .upload-area.dragover {
-            border-color: var(--primary-color);
-            background: #f0f9f0;
+            border-color: var(--primary);
+            background: var(--primary-light);
+            transform: scale(1.01);
         }
+
         .upload-area input {
             display: none;
         }
+
         .upload-icon {
-            font-size: 40px;
-            margin-bottom: 12px;
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.8;
         }
-        @media (min-width: 768px) {
-            .upload-icon {
-                font-size: 48px;
-                margin-bottom: 15px;
-            }
-        }
+
         .upload-text {
             color: var(--text-secondary);
-            font-size: 13px;
-            line-height: 1.5;
+            font-size: 14px;
         }
-        @media (min-width: 768px) {
-            .upload-text {
-                font-size: 14px;
-            }
-        }
+
         .upload-text strong {
-            color: var(--primary-color);
+            color: var(--primary);
+            font-weight: 500;
         }
+
         .file-info {
             display: none;
-            margin-top: 16px;
-            padding: 12px;
-            background: #f9f9f9;
-            border-radius: 8px;
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 10px;
+            border: 1px solid var(--border);
         }
-        @media (min-width: 768px) {
-            .file-info {
-                margin-top: 20px;
-                padding: 15px;
-            }
-        }
+
         .file-info.show {
             display: block;
+            animation: fadeIn 0.3s ease;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .file-name {
-            color: var(--text-color);
+            color: var(--text);
             font-weight: 500;
-            margin-bottom: 4px;
             font-size: 14px;
             word-break: break-word;
         }
+
         .file-size {
             color: var(--text-muted);
             font-size: 12px;
+            margin-top: 4px;
         }
+
         .options {
-            margin-top: 16px;
-            padding: 12px;
-            background: #f9f9f9;
-            border-radius: 8px;
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--bg);
+            border-radius: 10px;
+            border: 1px solid var(--border);
         }
-        @media (min-width: 768px) {
-            .options {
-                margin-top: 20px;
-                padding: 15px;
-            }
-        }
+
         .checkbox-label {
             display: flex;
             align-items: center;
             justify-content: space-between;
             cursor: pointer;
-            font-size: 13px;
-            color: var(--text-secondary);
-            position: relative;
-            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
         }
-        @media (min-width: 768px) {
-            .checkbox-label {
-                font-size: 14px;
-                gap: 15px;
-            }
-        }
+
         .checkbox-label-text {
             flex: 1;
-            line-height: 1.4;
+            color: var(--text);
+            font-size: 14px;
         }
+
+        .checkbox-label-text small {
+            color: var(--text-secondary);
+            font-size: 12px;
+            display: block;
+            margin-top: 2px;
+        }
+
         .checkbox-label input {
             display: none;
         }
-        .checkbox-label:hover {
-            color: var(--primary-color);
-        }
-        /* 开关样式 */
+
         .switch-slider {
             position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 24px;
+            width: 48px;
+            height: 26px;
+            background: var(--border);
+            border-radius: 26px;
+            transition: 0.3s;
             flex-shrink: 0;
-            background-color: #ccc;
-            border-radius: 24px;
-            transition: .3s;
-            cursor: pointer;
         }
-        @media (min-width: 768px) {
-            .switch-slider {
-                width: 50px;
-                height: 26px;
-            }
-        }
+
         .switch-slider:before {
             position: absolute;
             content: "";
-            height: 18px;
-            width: 18px;
+            height: 20px;
+            width: 20px;
             left: 3px;
             bottom: 3px;
-            background-color: white;
-            transition: .3s;
+            background: white;
             border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        @media (min-width: 768px) {
-            .switch-slider:before {
-                height: 20px;
-                width: 20px;
-            }
-        }
+
         .checkbox-label input:checked + .switch-slider {
-            background-color: var(--primary-color);
+            background: var(--primary);
         }
+
         .checkbox-label input:checked + .switch-slider:before {
-            transform: translateX(20px);
+            transform: translateX(22px);
         }
-        @media (min-width: 768px) {
-            .checkbox-label input:checked + .switch-slider:before {
-                transform: translateX(24px);
-            }
-        }
-        .btn {
-            width: 100%;
-            padding: 12px 20px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            margin-top: 16px;
-            transition: background 0.3s, transform 0.1s;
-            -webkit-tap-highlight-color: transparent;
-        }
-        @media (min-width: 768px) {
-            .btn {
-                padding: 14px;
-                font-size: 16px;
-                margin-top: 20px;
-            }
-        }
-        .btn:hover {
-            background: var(--primary-hover);
-        }
-        .btn:active {
-            transform: scale(0.98);
-        }
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .result {
-            display: none;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-        @media (min-width: 768px) {
-            .result {
-                margin-top: 25px;
-                padding-top: 25px;
-            }
-        }
-        .result.show {
-            display: block;
-        }
-        .result-label {
-            color: var(--text-secondary);
-            font-size: 12px;
-            margin-bottom: 8px;
-        }
-        @media (min-width: 768px) {
-            .result-label {
-                font-size: 13px;
-            }
-        }
-        .result-url {
-            background: #f5f5f5;
-            padding: 10px 12px;
-            border-radius: 6px;
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 13px;
-            color: var(--primary-color);
-            border: 1px solid #eee;
-        }
-        @media (min-width: 768px) {
-            .result-url {
-                padding: 12px;
-                font-size: 14px;
-            }
-        }
-        .result-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 10px;
-        }
-        @media (min-width: 768px) {
-            .result-actions {
-                display: flex;
-                gap: 10px;
-            }
-        }
-        .btn-small {
-            padding: 10px 16px;
-            font-size: 13px;
-        }
-        @media (min-width: 768px) {
-            .btn-small {
-                padding: 10px;
-                font-size: 14px;
-            }
-        }
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-        }
-        .btn-outline:hover {
-            background: #f5f5f5;
-        }
-        .error {
-            color: var(--error-color);
-            font-size: 13px;
-            margin-top: 12px;
-            padding: 10px 12px;
-            background: #ffebee;
-            border-radius: 6px;
-            display: none;
-        }
-        @media (min-width: 768px) {
-            .error {
-                font-size: 14px;
-                margin-top: 10px;
-            }
-        }
-        .error.show {
-            display: block;
-        }
-        .loading {
-            display: none;
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 13px;
-            margin-top: 12px;
-        }
-        @media (min-width: 768px) {
-            .loading {
-                font-size: 14px;
-                margin-top: 15px;
-            }
-        }
-        .loading.show {
-            display: block;
-        }
-        /* 加载动画 */
-        .loading::before {
-            content: '';
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 2px solid var(--text-secondary);
-            border-top-color: transparent;
-            border-radius: 50%;
-            margin-right: 8px;
-            vertical-align: middle;
-            animation: spin 0.8s linear infinite;
-        }
-        @media (min-width: 768px) {
-            .loading::before {
-                width: 16px;
-                height: 16px;
-            }
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        /* 过期时间选择器 */
+
         .expire-container {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #eee;
+            margin-top: 16px;
+            padding-top: 16px;
         }
-        @media (min-width: 768px) {
-            .expire-container {
-                margin-top: 15px;
-                padding-top: 15px;
-            }
-        }
+
         .expire-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
+
         .expire-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
             color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
         }
-        @media (min-width: 768px) {
-            .expire-label {
-                font-size: 13px;
-            }
-        }
-        /* 永不过期复选框 */
+
         .never-expire-label {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 12px;
+            gap: 8px;
+            font-size: 13px;
             color: var(--text-secondary);
             cursor: pointer;
-            user-select: none;
         }
-        @media (min-width: 768px) {
-            .never-expire-label {
-                font-size: 13px;
-            }
-        }
+
         .never-expire-label input {
             width: 16px;
             height: 16px;
+            accent-color: var(--primary);
             cursor: pointer;
         }
-        /* 日期选择器按钮 */
+
         .expire-picker-btn {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 10px 14px;
-            background: #f9f9f9;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
+            gap: 10px;
+            padding: 12px 14px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
             cursor: pointer;
             font-size: 13px;
             color: var(--text-secondary);
@@ -456,64 +251,226 @@
             width: 100%;
             justify-content: flex-start;
         }
-        @media (min-width: 768px) {
-            .expire-picker-btn {
-                padding: 12px 16px;
-                font-size: 14px;
-            }
+
+        .expire-picker-btn:hover:not(.disabled) {
+            border-color: var(--primary);
+            color: var(--primary);
         }
-        .expire-picker-btn:hover {
-            border-color: var(--primary-color);
-            background: #f0f9f0;
-        }
+
         .expire-picker-btn.disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
+
         .expire-picker-btn .icon {
             font-size: 16px;
         }
+
         .expire-picker-btn .text {
             flex: 1;
         }
+
         .expire-picker-btn .clear-btn {
             display: none;
-            padding: 2px 8px;
+            padding: 4px 10px;
             font-size: 12px;
-            background: #ffebee;
-            color: var(--error-color);
+            background: var(--error-bg);
+            color: var(--error);
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
+            font-weight: 500;
         }
+
         .expire-picker-btn .clear-btn:hover {
-            background: #ffcdd2;
+            background: #fee2e2;
         }
+
         .expire-picker-btn.has-value .clear-btn {
             display: block;
         }
-        /* 日历弹窗 */
-        .calendar-popup {
+
+        .expire-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .preset-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            font-weight: 400;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .preset-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 24px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.25);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            opacity: 0.6;
+            box-shadow: none;
+        }
+
+        .result {
             display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            z-index: 1000;
-            padding: 20px;
-            min-width: 280px;
+            margin-top: 28px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
         }
-        @media (min-width: 768px) {
-            .calendar-popup {
-                min-width: 320px;
-            }
+
+        .result.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
         }
-        .calendar-popup.show {
+
+        .result-label {
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 10px;
+        }
+
+        .result-url {
+            background: var(--bg);
+            padding: 14px 16px;
+            border-radius: 10px;
+            word-break: break-all;
+            font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 13px;
+            color: var(--primary);
+            border: 1px solid var(--border);
+        }
+
+        .result-tip {
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--primary-light);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--primary-hover);
+            line-height: 1.5;
+        }
+
+        .result-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .btn-small {
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            box-shadow: none;
+        }
+
+        .btn-outline:hover {
+            background: var(--bg);
+            border-color: var(--text-secondary);
+        }
+
+        .error {
+            color: var(--error);
+            font-size: 13px;
+            margin-top: 16px;
+            padding: 12px 14px;
+            background: var(--error-bg);
+            border-radius: 8px;
+            display: none;
+            border: 1px solid #fecaca;
+        }
+
+        .error.show {
+            display: block;
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 16px;
+            font-weight: 500;
+        }
+
+        .loading.show {
             display: block;
         }
+
+        .loading::before {
+            content: '';
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 日历弹窗 */
         .calendar-overlay {
             display: none;
             position: fixed;
@@ -521,176 +478,221 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
             z-index: 999;
         }
+
         .calendar-overlay.show {
             display: block;
+            animation: fadeIn 0.2s ease;
         }
+
+        .calendar-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            padding: 24px;
+            min-width: 300px;
+            border: 1px solid var(--border);
+        }
+
+        .calendar-popup.show {
+            display: block;
+            animation: scaleIn 0.2s ease forwards;
+        }
+
+        @keyframes scaleIn {
+            to { transform: translate(-50%, -50%) scale(1); }
+        }
+
         .calendar-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
+
         .calendar-header h3 {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 600;
-            color: var(--text-color);
+            color: var(--text);
         }
+
         .calendar-header .close-btn {
             background: none;
             border: none;
-            font-size: 20px;
+            font-size: 24px;
             cursor: pointer;
-            color: var(--text-secondary);
+            color: var(--text-muted);
+            line-height: 1;
+            padding: 4px;
         }
+
+        .calendar-header .close-btn:hover {
+            color: var(--text);
+        }
+
         .calendar-nav {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 16px;
         }
+
         .calendar-nav button {
-            padding: 4px 8px;
-            background: #f5f5f5;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
+            color: var(--text);
+            transition: all 0.2s;
         }
+
         .calendar-nav button:hover {
-            background: #e8e8e8;
+            background: var(--border);
         }
+
         .calendar-nav span {
             flex: 1;
             text-align: center;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
+            color: var(--text);
         }
+
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 2px;
+            gap: 4px;
         }
+
         .calendar-grid .weekday {
             text-align: center;
             font-size: 11px;
             color: var(--text-muted);
-            padding: 8px 0;
+            padding: 10px 0;
+            font-weight: 500;
+            text-transform: uppercase;
         }
+
         .calendar-grid .day {
             text-align: center;
-            padding: 8px 0;
+            padding: 10px 0;
             font-size: 13px;
             cursor: pointer;
-            border-radius: 4px;
-            transition: background 0.2s;
+            border-radius: 8px;
+            transition: all 0.2s;
+            color: var(--text);
         }
+
         .calendar-grid .day:hover {
-            background: #e8f5e9;
+            background: var(--primary-light);
+            color: var(--primary-hover);
         }
+
         .calendar-grid .day.selected {
-            background: var(--primary-color);
+            background: var(--primary);
             color: white;
         }
+
         .calendar-grid .day.today {
-            border: 1px solid var(--primary-color);
+            border: 2px solid var(--primary);
         }
+
         .calendar-grid .day.empty {
             cursor: default;
         }
+
         .calendar-time {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
         }
+
         .calendar-time-label {
             font-size: 12px;
             color: var(--text-secondary);
-            margin-bottom: 8px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 10px;
         }
+
         .calendar-time-inputs {
             display: flex;
             gap: 8px;
             align-items: center;
         }
+
         .calendar-time-inputs input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 14px;
-            text-align: center;
-        }
-        .calendar-time-inputs input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-        .calendar-time-inputs span {
-            font-size: 16px;
-            color: var(--text-secondary);
-        }
-        .calendar-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 15px;
-        }
-        .calendar-actions button {
             flex: 1;
             padding: 10px;
-            border: none;
-            border-radius: 6px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: background 0.2s;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: 500;
+            color: var(--text);
         }
-        .calendar-actions .cancel-btn {
-            background: #f5f5f5;
-            color: var(--text-secondary);
+
+        .calendar-time-inputs input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
-        .calendar-actions .cancel-btn:hover {
-            background: #e8e8e8;
+
+        .calendar-time-inputs span {
+            color: var(--text-muted);
+            font-weight: 300;
         }
-        .calendar-actions .confirm-btn {
-            background: var(--primary-color);
-            color: white;
-        }
-        .calendar-actions .confirm-btn:hover {
-            background: var(--primary-hover);
-        }
-        /* 预设按钮 */
-        .expire-presets {
+
+        .calendar-actions {
             display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 10px;
+            gap: 10px;
+            margin-top: 20px;
         }
-        .preset-btn {
-            padding: 4px 10px;
-            font-size: 11px;
-            background: #f5f5f5;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
+
+        .calendar-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            color: var(--text-secondary);
             transition: all 0.2s;
         }
-        .preset-btn:hover {
-            background: #e8e8e8;
-            border-color: var(--primary-color);
-            color: var(--primary-color);
+
+        .calendar-actions .cancel-btn {
+            background: var(--bg);
+            color: var(--text-secondary);
         }
-        .preset-btn.active {
-            background: var(--primary-color);
+
+        .calendar-actions .cancel-btn:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .calendar-actions .confirm-btn {
+            background: var(--primary);
             color: white;
-            border-color: var(--primary-color);
         }
-        @media (min-width: 768px) {
-            .preset-btn {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
+
+        .calendar-actions .confirm-btn:hover {
+            background: var(--primary-hover);
         }
     </style>
 </head>
@@ -715,13 +717,16 @@
 
             <div class="options" id="options" style="display: none;">
                 <label class="checkbox-label">
-                    <span class="checkbox-label-text">🔥 阅后即焚<br><small style="font-size: 11px; opacity: 0.8;">文件访问一次后自动删除</small></span>
+                    <span class="checkbox-label-text">
+                        阅后即焚
+                        <small>文件访问一次后自动删除</small>
+                    </span>
                     <input type="checkbox" id="onceCheckbox">
                     <span class="switch-slider"></span>
                 </label>
                 <div class="expire-container">
                     <div class="expire-header">
-                        <span class="expire-label">⏱️ 过期时间（可选）</span>
+                        <span class="expire-label">过期时间</span>
                         <label class="never-expire-label">
                             <input type="checkbox" id="neverExpireCheckbox" checked>
                             永不过期
@@ -729,7 +734,7 @@
                     </div>
                     <button type="button" class="expire-picker-btn disabled" id="expirePickerBtn">
                         <span class="icon">📅</span>
-                        <span class="text">选择过期日期和时间</span>
+                        <span class="text">选择日期</span>
                         <button type="button" class="clear-btn">清除</button>
                     </button>
                     <div class="expire-presets">
@@ -748,18 +753,16 @@
 
             <button type="submit" class="btn" id="uploadBtn" disabled>上传</button>
 
-            <p class="loading" id="loading">上传中...</p>
+            <p class="loading" id="loading">上传中</p>
         </form>
 
         <div class="result" id="result">
-            <div class="result-label">Raw 链接：</div>
+            <div class="result-label">分享链接</div>
             <div class="result-url" id="resultUrl"></div>
-            <div id="onceTip" style="color: var(--warning-color); font-size: 11px; margin-top: 8px; display: none; line-height: 1.4;">
-                🔒 此链接为阅后即焚，访问一次后将自动删除
-            </div>
+            <div id="onceTip" class="result-tip" style="display: none;"></div>
             <div class="result-actions">
                 <button class="btn btn-small btn-outline" id="copyBtn">复制链接</button>
-                <button class="btn btn-small" id="openBtn">在新窗口打开</button>
+                <button class="btn btn-small" id="openBtn">打开链接</button>
             </div>
         </div>
     </div>
@@ -786,7 +789,7 @@
             <div class="weekday">六</div>
         </div>
         <div class="calendar-time">
-            <div class="calendar-time-label">选择时间</div>
+            <div class="calendar-time-label">时间</div>
             <div class="calendar-time-inputs">
                 <input type="number" id="calHour" min="0" max="23" placeholder="时" value="12">
                 <span>:</span>
@@ -819,12 +822,10 @@
         const copyBtn = document.getElementById('copyBtn');
         const openBtn = document.getElementById('openBtn');
 
-        // 过期时间相关
         const expirePickerBtn = document.getElementById('expirePickerBtn');
         const neverExpireCheckbox = document.getElementById('neverExpireCheckbox');
         const presetBtns = document.querySelectorAll('.preset-btn');
 
-        // 日历相关
         const calendarPopup = document.getElementById('calendarPopup');
         const calendarOverlay = document.getElementById('calendarOverlay');
         const calendarCloseBtn = document.getElementById('calendarCloseBtn');
@@ -843,7 +844,6 @@
         let currentCalendarDate = new Date();
         let selectedCalendarDate = null;
 
-        // 永不过期复选框变化
         neverExpireCheckbox.addEventListener('change', () => {
             if (neverExpireCheckbox.checked) {
                 expirePickerBtn.classList.add('disabled');
@@ -853,33 +853,28 @@
             } else {
                 expirePickerBtn.classList.remove('disabled');
                 expirePickerBtn.querySelector('.text').textContent = selectedExpireDate ?
-                    formatDate(selectedExpireDate) : '选择过期日期和时间';
+                    formatDate(selectedExpireDate) : '选择日期';
             }
         });
 
-        // 预设按钮点击事件
         presetBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const seconds = parseInt(btn.dataset.seconds);
                 neverExpireCheckbox.checked = false;
                 expirePickerBtn.classList.remove('disabled');
 
-                // 计算过期日期
                 const now = new Date();
                 selectedExpireDate = new Date(now.getTime() + seconds * 1000);
                 selectedCalendarDate = new Date(selectedExpireDate);
 
-                // 更新按钮显示
                 presetBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
 
-                // 更新按钮文本
                 expirePickerBtn.querySelector('.text').textContent = formatDate(selectedExpireDate);
                 expirePickerBtn.classList.add('has-value');
             });
         });
 
-        // 格式化日期
         function formatDate(date) {
             const month = date.getMonth() + 1;
             const day = date.getDate();
@@ -888,17 +883,15 @@
             return `${month}月${day}日 ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         }
 
-        // 清除过期时间
         function clearExpireSelection() {
             selectedExpireDate = null;
             selectedCalendarDate = null;
             expirePickerBtn.classList.remove('has-value');
-            expirePickerBtn.querySelector('.text').textContent = '选择过期日期和时间';
+            expirePickerBtn.querySelector('.text').textContent = '选择日期';
             presetBtns.forEach(btn => btn.classList.remove('active'));
             neverExpireCheckbox.checked = true;
         }
 
-        // 点击选择器按钮打开日历
         expirePickerBtn.addEventListener('click', () => {
             if (expirePickerBtn.classList.contains('disabled')) return;
 
@@ -920,7 +913,6 @@
             calendarOverlay.classList.add('show');
         });
 
-        // 关闭日历
         function closeCalendar() {
             calendarPopup.classList.remove('show');
             calendarOverlay.classList.remove('show');
@@ -930,7 +922,6 @@
         calendarOverlay.addEventListener('click', closeCalendar);
         calendarCancelBtn.addEventListener('click', closeCalendar);
 
-        // 点击确定按钮
         calendarConfirmBtn.addEventListener('click', () => {
             if (!selectedCalendarDate) {
                 selectedCalendarDate = new Date(currentCalendarDate);
@@ -958,30 +949,25 @@
             closeCalendar();
         });
 
-        // 渲染日历
         function renderCalendar() {
             const year = currentCalendarDate.getFullYear();
             const month = currentCalendarDate.getMonth();
 
             currentMonthDisplay.textContent = `${year}年${month + 1}月`;
 
-            // 清除旧的日期
             calendarGrid.querySelectorAll('.day, .empty').forEach(el => el.remove());
 
-            // 获取当月第一天和最后一天
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const startDayOfWeek = firstDay.getDay();
             const totalDays = lastDay.getDate();
 
-            // 添加空白格
             for (let i = 0; i < startDayOfWeek; i++) {
                 const empty = document.createElement('div');
                 empty.className = 'day empty';
                 calendarGrid.appendChild(empty);
             }
 
-            // 添加日期
             const today = new Date();
             const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
 
@@ -992,12 +978,10 @@
 
                 const thisDate = new Date(year, month, day);
 
-                // 今天
                 if (isCurrentMonth && day === today.getDate()) {
                     dayEl.classList.add('today');
                 }
 
-                // 已选择
                 if (selectedCalendarDate &&
                     selectedCalendarDate.getFullYear() === year &&
                     selectedCalendarDate.getMonth() === month &&
@@ -1015,7 +999,6 @@
             }
         }
 
-        // 切换月份
         prevMonthBtn.addEventListener('click', () => {
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
             renderCalendar();
@@ -1026,13 +1009,11 @@
             renderCalendar();
         });
 
-        // 点击清除按钮
         expirePickerBtn.querySelector('.clear-btn')?.addEventListener('click', (e) => {
             e.stopPropagation();
             clearExpireSelection();
         });
 
-        // 计算过期总秒数
         function getExpireSeconds() {
             if (neverExpireCheckbox.checked || !selectedExpireDate) {
                 return 0;
@@ -1085,7 +1066,7 @@
             const isAllowed = allowedExts.includes(ext) || allowedExts.includes(filename);
 
             if (!isAllowed) {
-                showError('只能上传常见的配置文件格式 (yaml, yml, json, txt, toml, xml, ini, env 等)');
+                showError('只能上传常见的配置文件格式 (yaml, json, txt, toml 等)');
                 return;
             }
 
@@ -1104,7 +1085,7 @@
 
         function formatSize(bytes) {
             if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
             return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
         }
 
@@ -1128,7 +1109,6 @@
                 formData.append('once', 'true');
             }
 
-            // 添加过期时间
             const expireSeconds = getExpireSeconds();
             if (expireSeconds > 0) {
                 formData.append('expire_seconds', expireSeconds.toString());
@@ -1148,17 +1128,16 @@
 
                 resultUrl.textContent = data.raw_url;
 
-                // 显示提示信息
                 const tips = [];
                 if (data.once) {
-                    tips.push('🔒 此链接为阅后即焚，访问一次后将自动删除');
+                    tips.push('🔒 阅后即焚，访问一次后自动删除');
                 }
                 if (data.expires_at) {
                     const expireTime = new Date(data.expires_at * 1000);
-                    tips.push('⏱️ 此链接将于 ' + expireTime.toLocaleString('zh-CN') + ' 后过期');
+                    tips.push('⏱️ 将于 ' + expireTime.toLocaleString('zh-CN') + ' 过期');
                 }
                 if (neverExpireCheckbox.checked || (!data.once && !data.expires_at)) {
-                    tips.push('♾️ 此链接永不过期');
+                    tips.push('♾️ 永不过期');
                 }
 
                 if (tips.length > 0) {
@@ -1179,7 +1158,7 @@
 
         copyBtn.addEventListener('click', () => {
             navigator.clipboard.writeText(resultUrl.textContent).then(() => {
-                copyBtn.textContent = '已复制!';
+                copyBtn.textContent = '已复制';
                 setTimeout(() => {
                     copyBtn.textContent = '复制链接';
                 }, 2000);
