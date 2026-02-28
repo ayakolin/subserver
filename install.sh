@@ -136,12 +136,12 @@ download_binary() {
     # 检查是否已存在二进制文件
     if [ -f "$INSTALL_DIR/subserver" ]; then
         log_warn "发现已安装的二进制文件"
-        read -p "是否覆盖现有安装？(y/N): " confirm
+        read -p "是否覆盖现有安装？(y/N): " confirm < /dev/tty
         if [[ ! $confirm =~ ^[Yy]$ ]]; then
             log_info "取消覆盖，保留现有版本"
             rm -rf "$temp_dir"
             # 询问是否继续配置
-            read -p "是否继续配置服务？(y/N): " continue_config
+            read -p "是否继续配置服务？(y/N): " continue_config < /dev/tty
             if [[ $continue_config =~ ^[Yy]$ ]]; then
                 return 0
             else
@@ -204,7 +204,7 @@ create_config() {
 
     if [ -f "$CONFIG_FILE" ]; then
         log_warn "配置文件已存在"
-        read -p "是否重新配置？(y/N): " confirm
+        read -p "是否重新配置？(y/N): " confirm < /dev/tty
         if [[ ! $confirm =~ ^[Yy]$ ]]; then
             log_info "使用现有配置文件，跳过创建"
             return
@@ -216,16 +216,16 @@ create_config() {
     echo ""
 
     # HTTP 端口
-    read -p "HTTP 端口 (默认 8080): " http_port
+    read -p "HTTP 端口 (默认 8080): " http_port < /dev/tty
     http_port=${http_port:-8080}
 
     # HTTPS 配置
-    read -p "是否启用 HTTPS? (y/N): " enable_https
+    read -p "是否启用 HTTPS? (y/N): " enable_https < /dev/tty
     if [[ $enable_https =~ ^[Yy]$ ]]; then
-        read -p "HTTPS 端口 (默认 443): " https_port
+        read -p "HTTPS 端口 (默认 443): " https_port < /dev/tty
         https_port=${https_port:-443}
-        read -p "域名 (用于 SSL 证书，多个用逗号分隔): " domains
-        read -p "联系邮箱 (用于 SSL 证书): " email
+        read -p "域名 (用于 SSL 证书，多个用逗号分隔): " domains < /dev/tty
+        read -p "联系邮箱 (用于 SSL 证书): " email < /dev/tty
         tls_enabled="true"
     else
         https_port="443"
@@ -237,23 +237,23 @@ create_config() {
     # 上传配置
     echo ""
     log_info "=== 上传配置 ==="
-    read -p "上传目录路径 (默认 ./uploads): " upload_dir
+    read -p "上传目录路径 (默认 ./uploads): " upload_dir < /dev/tty
     upload_dir=${upload_dir:-./uploads}
 
-    read -p "最大上传文件大小 (MB, 默认 1): " max_upload_size
+    read -p "最大上传文件大小 (MB, 默认 1): " max_upload_size < /dev/tty
     max_upload_size=${max_upload_size:-1}
 
     # 数据库配置
     echo ""
     log_info "=== 数据库配置 ==="
-    read -p "数据库文件路径 (默认 ./data/subserver.db): " db_path
+    read -p "数据库文件路径 (默认 ./data/subserver.db): " db_path < /dev/tty
     db_path=${db_path:-./data/subserver.db}
 
     # 日志配置
     echo ""
     log_info "=== 日志配置 ==="
     echo "日志级别：info, warn, error, debug (默认 info): "
-    read -p "日志级别 (默认 info): " log_level
+    read -p "日志级别 (默认 info): " log_level < /dev/tty
     log_level=${log_level:-info}
 
     # 生成配置文件
@@ -415,7 +415,7 @@ uninstall() {
     sudo systemctl daemon-reload
 
     # 删除安装目录
-    read -p "是否删除上传的文件？(y/N，删除后无法恢复): " remove_files
+    read -p "是否删除上传的文件？(y/N，删除后无法恢复): " remove_files < /dev/tty
     if [[ $remove_files =~ ^[Yy]$ ]]; then
         sudo rm -rf "$INSTALL_DIR"
     else
