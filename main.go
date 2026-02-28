@@ -169,10 +169,12 @@ func initSchema(db *sql.DB) error {
 		size INTEGER NOT NULL,
 		mime_type TEXT NOT NULL,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		expires_at DATETIME,
 		once BOOLEAN NOT NULL DEFAULT 0,
 		read_count INTEGER NOT NULL DEFAULT 0
 	);
 	CREATE INDEX IF NOT EXISTS idx_files_id ON files(id);
+	CREATE INDEX IF NOT EXISTS idx_files_expires ON files(expires_at);
 	`
 
 	_, err := db.Exec(schema)

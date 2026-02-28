@@ -390,6 +390,308 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        /* 过期时间选择器 */
+        .expire-container {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+        @media (min-width: 768px) {
+            .expire-container {
+                margin-top: 15px;
+                padding-top: 15px;
+            }
+        }
+        .expire-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .expire-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        @media (min-width: 768px) {
+            .expire-label {
+                font-size: 13px;
+            }
+        }
+        /* 永不过期复选框 */
+        .never-expire-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+        @media (min-width: 768px) {
+            .never-expire-label {
+                font-size: 13px;
+            }
+        }
+        .never-expire-label input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        /* 日期选择器按钮 */
+        .expire-picker-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: #f9f9f9;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            width: 100%;
+            justify-content: flex-start;
+        }
+        @media (min-width: 768px) {
+            .expire-picker-btn {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+        .expire-picker-btn:hover {
+            border-color: var(--primary-color);
+            background: #f0f9f0;
+        }
+        .expire-picker-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .expire-picker-btn .icon {
+            font-size: 16px;
+        }
+        .expire-picker-btn .text {
+            flex: 1;
+        }
+        .expire-picker-btn .clear-btn {
+            display: none;
+            padding: 2px 8px;
+            font-size: 12px;
+            background: #ffebee;
+            color: var(--error-color);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .expire-picker-btn .clear-btn:hover {
+            background: #ffcdd2;
+        }
+        .expire-picker-btn.has-value .clear-btn {
+            display: block;
+        }
+        /* 日历弹窗 */
+        .calendar-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 1000;
+            padding: 20px;
+            min-width: 280px;
+        }
+        @media (min-width: 768px) {
+            .calendar-popup {
+                min-width: 320px;
+            }
+        }
+        .calendar-popup.show {
+            display: block;
+        }
+        .calendar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        .calendar-overlay.show {
+            display: block;
+        }
+        .calendar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .calendar-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        .calendar-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .calendar-nav button {
+            padding: 4px 8px;
+            background: #f5f5f5;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .calendar-nav button:hover {
+            background: #e8e8e8;
+        }
+        .calendar-nav span {
+            flex: 1;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        .calendar-grid .weekday {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            padding: 8px 0;
+        }
+        .calendar-grid .day {
+            text-align: center;
+            padding: 8px 0;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .calendar-grid .day:hover {
+            background: #e8f5e9;
+        }
+        .calendar-grid .day.selected {
+            background: var(--primary-color);
+            color: white;
+        }
+        .calendar-grid .day.today {
+            border: 1px solid var(--primary-color);
+        }
+        .calendar-grid .day.empty {
+            cursor: default;
+        }
+        .calendar-time {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .calendar-time-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .calendar-time-inputs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .calendar-time-inputs input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            text-align: center;
+        }
+        .calendar-time-inputs input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        .calendar-time-inputs span {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+        .calendar-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .calendar-actions button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .calendar-actions .cancel-btn {
+            background: #f5f5f5;
+            color: var(--text-secondary);
+        }
+        .calendar-actions .cancel-btn:hover {
+            background: #e8e8e8;
+        }
+        .calendar-actions .confirm-btn {
+            background: var(--primary-color);
+            color: white;
+        }
+        .calendar-actions .confirm-btn:hover {
+            background: var(--primary-hover);
+        }
+        /* 预设按钮 */
+        .expire-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .preset-btn {
+            padding: 4px 10px;
+            font-size: 11px;
+            background: #f5f5f5;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .preset-btn:hover {
+            background: #e8e8e8;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        .preset-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        @media (min-width: 768px) {
+            .preset-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -417,6 +719,29 @@
                     <input type="checkbox" id="onceCheckbox">
                     <span class="switch-slider"></span>
                 </label>
+                <div class="expire-container">
+                    <div class="expire-header">
+                        <span class="expire-label">⏱️ 过期时间（可选）</span>
+                        <label class="never-expire-label">
+                            <input type="checkbox" id="neverExpireCheckbox" checked>
+                            永不过期
+                        </label>
+                    </div>
+                    <button type="button" class="expire-picker-btn disabled" id="expirePickerBtn">
+                        <span class="icon">📅</span>
+                        <span class="text">选择过期日期和时间</span>
+                        <button type="button" class="clear-btn">清除</button>
+                    </button>
+                    <div class="expire-presets">
+                        <button type="button" class="preset-btn" data-seconds="60">1 分钟</button>
+                        <button type="button" class="preset-btn" data-seconds="300">5 分钟</button>
+                        <button type="button" class="preset-btn" data-seconds="600">10 分钟</button>
+                        <button type="button" class="preset-btn" data-seconds="1800">30 分钟</button>
+                        <button type="button" class="preset-btn" data-seconds="3600">1 小时</button>
+                        <button type="button" class="preset-btn" data-seconds="86400">1 天</button>
+                        <button type="button" class="preset-btn" data-seconds="604800">7 天</button>
+                    </div>
+                </div>
             </div>
 
             <p class="error" id="error"></p>
@@ -439,6 +764,43 @@
         </div>
     </div>
 
+    <!-- 日历弹窗 -->
+    <div class="calendar-overlay" id="calendarOverlay"></div>
+    <div class="calendar-popup" id="calendarPopup">
+        <div class="calendar-header">
+            <h3>选择过期时间</h3>
+            <button class="close-btn" id="calendarCloseBtn">&times;</button>
+        </div>
+        <div class="calendar-nav">
+            <button id="prevMonth">&lt;</button>
+            <span id="currentMonthDisplay"></span>
+            <button id="nextMonth">&gt;</button>
+        </div>
+        <div class="calendar-grid" id="calendarGrid">
+            <div class="weekday">日</div>
+            <div class="weekday">一</div>
+            <div class="weekday">二</div>
+            <div class="weekday">三</div>
+            <div class="weekday">四</div>
+            <div class="weekday">五</div>
+            <div class="weekday">六</div>
+        </div>
+        <div class="calendar-time">
+            <div class="calendar-time-label">选择时间</div>
+            <div class="calendar-time-inputs">
+                <input type="number" id="calHour" min="0" max="23" placeholder="时" value="12">
+                <span>:</span>
+                <input type="number" id="calMinute" min="0" max="59" placeholder="分" value="00">
+                <span>:</span>
+                <input type="number" id="calSecond" min="0" max="59" placeholder="秒" value="00">
+            </div>
+        </div>
+        <div class="calendar-actions">
+            <button class="cancel-btn" id="calendarCancelBtn">取消</button>
+            <button class="confirm-btn" id="calendarConfirmBtn">确定</button>
+        </div>
+    </div>
+
     <script>
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
@@ -457,7 +819,229 @@
         const copyBtn = document.getElementById('copyBtn');
         const openBtn = document.getElementById('openBtn');
 
+        // 过期时间相关
+        const expirePickerBtn = document.getElementById('expirePickerBtn');
+        const neverExpireCheckbox = document.getElementById('neverExpireCheckbox');
+        const presetBtns = document.querySelectorAll('.preset-btn');
+
+        // 日历相关
+        const calendarPopup = document.getElementById('calendarPopup');
+        const calendarOverlay = document.getElementById('calendarOverlay');
+        const calendarCloseBtn = document.getElementById('calendarCloseBtn');
+        const calendarCancelBtn = document.getElementById('calendarCancelBtn');
+        const calendarConfirmBtn = document.getElementById('calendarConfirmBtn');
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const currentMonthDisplay = document.getElementById('currentMonthDisplay');
+        const calendarGrid = document.getElementById('calendarGrid');
+        const calHour = document.getElementById('calHour');
+        const calMinute = document.getElementById('calMinute');
+        const calSecond = document.getElementById('calSecond');
+
         let selectedFile = null;
+        let selectedExpireDate = null;
+        let currentCalendarDate = new Date();
+        let selectedCalendarDate = null;
+
+        // 永不过期复选框变化
+        neverExpireCheckbox.addEventListener('change', () => {
+            if (neverExpireCheckbox.checked) {
+                expirePickerBtn.classList.add('disabled');
+                expirePickerBtn.querySelector('.text').textContent = '永不过期';
+                selectedExpireDate = null;
+                presetBtns.forEach(btn => btn.classList.remove('active'));
+            } else {
+                expirePickerBtn.classList.remove('disabled');
+                expirePickerBtn.querySelector('.text').textContent = selectedExpireDate ?
+                    formatDate(selectedExpireDate) : '选择过期日期和时间';
+            }
+        });
+
+        // 预设按钮点击事件
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const seconds = parseInt(btn.dataset.seconds);
+                neverExpireCheckbox.checked = false;
+                expirePickerBtn.classList.remove('disabled');
+
+                // 计算过期日期
+                const now = new Date();
+                selectedExpireDate = new Date(now.getTime() + seconds * 1000);
+                selectedCalendarDate = new Date(selectedExpireDate);
+
+                // 更新按钮显示
+                presetBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // 更新按钮文本
+                expirePickerBtn.querySelector('.text').textContent = formatDate(selectedExpireDate);
+                expirePickerBtn.classList.add('has-value');
+            });
+        });
+
+        // 格式化日期
+        function formatDate(date) {
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const hour = date.getHours();
+            const minute = date.getMinutes();
+            return `${month}月${day}日 ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        }
+
+        // 清除过期时间
+        function clearExpireSelection() {
+            selectedExpireDate = null;
+            selectedCalendarDate = null;
+            expirePickerBtn.classList.remove('has-value');
+            expirePickerBtn.querySelector('.text').textContent = '选择过期日期和时间';
+            presetBtns.forEach(btn => btn.classList.remove('active'));
+            neverExpireCheckbox.checked = true;
+        }
+
+        // 点击选择器按钮打开日历
+        expirePickerBtn.addEventListener('click', () => {
+            if (expirePickerBtn.classList.contains('disabled')) return;
+
+            if (selectedCalendarDate) {
+                currentCalendarDate = new Date(selectedCalendarDate);
+                calHour.value = selectedCalendarDate.getHours().toString().padStart(2, '0');
+                calMinute.value = selectedCalendarDate.getMinutes().toString().padStart(2, '0');
+                calSecond.value = selectedCalendarDate.getSeconds().toString().padStart(2, '0');
+            } else {
+                const now = new Date();
+                currentCalendarDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+                calHour.value = '23';
+                calMinute.value = '59';
+                calSecond.value = '59';
+            }
+
+            renderCalendar();
+            calendarPopup.classList.add('show');
+            calendarOverlay.classList.add('show');
+        });
+
+        // 关闭日历
+        function closeCalendar() {
+            calendarPopup.classList.remove('show');
+            calendarOverlay.classList.remove('show');
+        }
+
+        calendarCloseBtn.addEventListener('click', closeCalendar);
+        calendarOverlay.addEventListener('click', closeCalendar);
+        calendarCancelBtn.addEventListener('click', closeCalendar);
+
+        // 点击确定按钮
+        calendarConfirmBtn.addEventListener('click', () => {
+            if (!selectedCalendarDate) {
+                selectedCalendarDate = new Date(currentCalendarDate);
+            }
+
+            const hour = parseInt(calHour.value) || 0;
+            const minute = parseInt(calMinute.value) || 0;
+            const second = parseInt(calSecond.value) || 0;
+
+            selectedExpireDate = new Date(
+                selectedCalendarDate.getFullYear(),
+                selectedCalendarDate.getMonth(),
+                selectedCalendarDate.getDate(),
+                hour,
+                minute,
+                second
+            );
+
+            neverExpireCheckbox.checked = false;
+            expirePickerBtn.classList.remove('disabled');
+            expirePickerBtn.classList.add('has-value');
+            expirePickerBtn.querySelector('.text').textContent = formatDate(selectedExpireDate);
+            presetBtns.forEach(btn => btn.classList.remove('active'));
+
+            closeCalendar();
+        });
+
+        // 渲染日历
+        function renderCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+
+            currentMonthDisplay.textContent = `${year}年${month + 1}月`;
+
+            // 清除旧的日期
+            calendarGrid.querySelectorAll('.day, .empty').forEach(el => el.remove());
+
+            // 获取当月第一天和最后一天
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDayOfWeek = firstDay.getDay();
+            const totalDays = lastDay.getDate();
+
+            // 添加空白格
+            for (let i = 0; i < startDayOfWeek; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'day empty';
+                calendarGrid.appendChild(empty);
+            }
+
+            // 添加日期
+            const today = new Date();
+            const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'day';
+                dayEl.textContent = day;
+
+                const thisDate = new Date(year, month, day);
+
+                // 今天
+                if (isCurrentMonth && day === today.getDate()) {
+                    dayEl.classList.add('today');
+                }
+
+                // 已选择
+                if (selectedCalendarDate &&
+                    selectedCalendarDate.getFullYear() === year &&
+                    selectedCalendarDate.getMonth() === month &&
+                    selectedCalendarDate.getDate() === day) {
+                    dayEl.classList.add('selected');
+                }
+
+                dayEl.addEventListener('click', () => {
+                    document.querySelectorAll('.calendar-grid .day.selected').forEach(el => el.classList.remove('selected'));
+                    dayEl.classList.add('selected');
+                    selectedCalendarDate = thisDate;
+                });
+
+                calendarGrid.appendChild(dayEl);
+            }
+        }
+
+        // 切换月份
+        prevMonthBtn.addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        // 点击清除按钮
+        expirePickerBtn.querySelector('.clear-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            clearExpireSelection();
+        });
+
+        // 计算过期总秒数
+        function getExpireSeconds() {
+            if (neverExpireCheckbox.checked || !selectedExpireDate) {
+                return 0;
+            }
+
+            const now = new Date();
+            const diff = selectedExpireDate - now;
+            return diff > 0 ? Math.floor(diff / 1000) : 0;
+        }
 
         uploadArea.addEventListener('click', () => fileInput.click());
 
@@ -544,6 +1128,12 @@
                 formData.append('once', 'true');
             }
 
+            // 添加过期时间
+            const expireSeconds = getExpireSeconds();
+            if (expireSeconds > 0) {
+                formData.append('expire_seconds', expireSeconds.toString());
+            }
+
             try {
                 const response = await fetch('/upload', {
                     method: 'POST',
@@ -557,11 +1147,27 @@
                 }
 
                 resultUrl.textContent = data.raw_url;
+
+                // 显示提示信息
+                const tips = [];
                 if (data.once) {
+                    tips.push('🔒 此链接为阅后即焚，访问一次后将自动删除');
+                }
+                if (data.expires_at) {
+                    const expireTime = new Date(data.expires_at * 1000);
+                    tips.push('⏱️ 此链接将于 ' + expireTime.toLocaleString('zh-CN') + ' 后过期');
+                }
+                if (neverExpireCheckbox.checked || (!data.once && !data.expires_at)) {
+                    tips.push('♾️ 此链接永不过期');
+                }
+
+                if (tips.length > 0) {
+                    onceTip.innerHTML = tips.join('<br>');
                     onceTip.style.display = 'block';
                 } else {
                     onceTip.style.display = 'none';
                 }
+
                 result.classList.add('show');
             } catch (err) {
                 showError(err.message);

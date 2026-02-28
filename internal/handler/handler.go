@@ -3,6 +3,8 @@ package handler
 import (
 	"database/sql"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"subserver/internal/file"
@@ -28,9 +30,10 @@ func NewHandler(db *sql.DB) *Handler {
 
 // UploadResponse 上传响应
 type UploadResponse struct {
-	ID     string `json:"id"`
-	RawURL string `json:"raw_url"`
-	Once   bool   `json:"once,omitempty"`
+	ID        string `json:"id"`
+	RawURL    string `json:"raw_url"`
+	Once      bool   `json:"once,omitempty"`
+	ExpiresAt *int64 `json:"expires_at,omitempty"`
 }
 
 // Upload 文件上传处理
@@ -50,8 +53,19 @@ func (h *Handler) Upload(c *gin.Context) {
 	// 获取阅后即焚选项
 	once := c.PostForm("once") == "true"
 
+	// 获取过期时间选项（秒）
+	var expiresAt *time.Time
+	expireSeconds := c.PostForm("expire_seconds")
+	if expireSeconds != "" {
+		seconds, err := strconv.Atoi(expireSeconds)
+		if err == nil && seconds > 0 {
+			t := time.Now().Add(time.Duration(seconds) * time.Second)
+			expiresAt = &t
+		}
+	}
+
 	// 保存文件到数据库
-	upload, err := file.SaveFile(h.db, fileHeader, once)
+	upload, err := file.SaveFile(h.db, fileHeader, once, expiresAt)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "保存文件失败"})
 		return
@@ -59,11 +73,16 @@ func (h *Handler) Upload(c *gin.Context) {
 
 	// 返回分享链接
 	rawURL := getHost(c) + "/raw/" + upload.ID
-	c.JSON(http.StatusOK, UploadResponse{
+	response := UploadResponse{
 		ID:     upload.ID,
 		RawURL: rawURL,
 		Once:   once,
-	})
+	}
+	if expiresAt != nil {
+		timestamp := expiresAt.Unix()
+		response.ExpiresAt = &timestamp
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 // GetRawFile 获取文件内容

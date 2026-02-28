@@ -53,6 +53,7 @@ type FileUpload struct {
 	Size      int64
 	MimeType  string
 	CreatedAt time.Time
+	ExpiresAt *time.Time
 	Once      bool
 }
 
@@ -79,7 +80,7 @@ func ValidateFile(file *multipart.FileHeader, maxSize int64) error {
 }
 
 // SaveFile 保存上传的文件到数据库
-func SaveFile(db *sql.DB, file *multipart.FileHeader, once bool) (*FileUpload, error) {
+func SaveFile(db *sql.DB, file *multipart.FileHeader, once bool, expiresAt *time.Time) (*FileUpload, error) {
 	// 生成唯一 ID
 	id := GenerateID()
 
@@ -98,11 +99,11 @@ func SaveFile(db *sql.DB, file *multipart.FileHeader, once bool) (*FileUpload, e
 
 	// 保存到数据库
 	query := `
-	INSERT INTO files (id, name, content, size, mime_type, created_at, once, read_count)
-	VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+	INSERT INTO files (id, name, content, size, mime_type, created_at, expires_at, once, read_count)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
 	`
 
-	_, err = db.Exec(query, id, file.Filename, content, file.Size, getMimeType(file.Filename), time.Now(), once)
+	_, err = db.Exec(query, id, file.Filename, content, file.Size, getMimeType(file.Filename), time.Now(), expiresAt, once)
 	if err != nil {
 		return nil, fmt.Errorf("保存文件到数据库失败：%w", err)
 	}
@@ -114,6 +115,7 @@ func SaveFile(db *sql.DB, file *multipart.FileHeader, once bool) (*FileUpload, e
 		Size:      file.Size,
 		MimeType:  getMimeType(file.Filename),
 		CreatedAt: time.Now(),
+		ExpiresAt: expiresAt,
 		Once:      once,
 	}, nil
 }
@@ -129,7 +131,7 @@ func GetFile(db *sql.DB, id string) (*FileUpload, error) {
 
 	// 先查询文件信息和读取次数
 	query := `
-	SELECT id, name, content, size, mime_type, created_at, once, read_count
+	SELECT id, name, content, size, mime_type, created_at, expires_at, once, read_count
 	FROM files
 	WHERE id = ?
 	`
@@ -137,6 +139,7 @@ func GetFile(db *sql.DB, id string) (*FileUpload, error) {
 	var f FileUpload
 	var once bool
 	var readCount int
+	var expiresAt sql.NullTime
 	err = tx.QueryRow(query, id).Scan(
 		&f.ID,
 		&f.Name,
@@ -144,6 +147,7 @@ func GetFile(db *sql.DB, id string) (*FileUpload, error) {
 		&f.Size,
 		&f.MimeType,
 		&f.CreatedAt,
+		&expiresAt,
 		&once,
 		&readCount,
 	)
@@ -157,6 +161,19 @@ func GetFile(db *sql.DB, id string) (*FileUpload, error) {
 	}
 
 	f.Once = once
+
+	// 检查是否过期
+	if expiresAt.Valid && time.Now().After(expiresAt.Time) {
+		// 文件已过期，删除它
+		_, err = tx.Exec(`DELETE FROM files WHERE id = ?`, id)
+		if err != nil {
+			return nil, err
+		}
+		if err := tx.Commit(); err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
 
 	// 如果是阅后即焚文件且已经读取过 (read_count >= 1)，返回文件不存在
 	if once && readCount >= 1 {
