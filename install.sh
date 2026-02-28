@@ -31,152 +31,174 @@ INSTALL_DIR="/opt/subserver"
 SERVICE_NAME="subserver"
 CONFIG_FILE="$INSTALL_DIR/config.yaml"
 SYSTEMD_SERVICE="/etc/systemd/system/${SERVICE_NAME}.service"
+REPO_OWNER="rinca"
+REPO_NAME="subserver"
 
-# 检测包管理器
-detect_package_manager() {
-    if command -v apt &> /dev/null; then
-        PM="apt"
-    elif command -v yum &> /dev/null; then
-        PM="yum"
-    elif command -v dnf &> /dev/null; then
-        PM="dnf"
-    elif command -v pacman &> /dev/null; then
-        PM="pacman"
-    elif command -v apk &> /dev/null; then
-        PM="apk"
-    else
-        log_error "不支持的包管理器，请手动安装 Go"
-        exit 1
-    fi
-    log_info "检测到包管理器：$PM"
-}
-
-# 检查并安装 Go
-install_go() {
-    if command -v go &> /dev/null; then
-        GO_VERSION=$(go version)
-        log_info "Go 已安装：$GO_VERSION"
-        return
-    fi
-
-    log_step "正在安装 Go..."
-
-    case $PM in
-        apt|yum|dnf)
-            if [ "$PM" = "apt" ]; then
-                sudo apt update -y
-                sudo apt install -y golang-go
-            else
-                sudo $PM install -y golang
-            fi
+# 检测系统架构
+detect_arch() {
+    local arch=$(uname -m)
+    case $arch in
+        x86_64)
+            ARCH="amd64"
             ;;
-        pacman)
-            sudo pacman -S --noconfirm go
+        aarch64|arm64)
+            ARCH="arm64"
             ;;
-        apk)
-            sudo apk add --no-cache go
+        armv7l)
+            ARCH="armv7"
+            ;;
+        i386|i686)
+            ARCH="386"
+            ;;
+        *)
+            log_error "不支持的系统架构：$arch"
+            exit 1
             ;;
     esac
+    log_info "检测到系统架构：$ARCH"
+}
 
-    if command -v go &> /dev/null; then
-        log_info "Go 安装成功：$(go version)"
+# 检测操作系统
+detect_os() {
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    case $OS in
+        linux)
+            OS="linux"
+            ;;
+        darwin)
+            OS="darwin"
+            ;;
+        *)
+            log_error "不支持的操作系统：$OS"
+            exit 1
+            ;;
+    esac
+    log_info "检测到操作系统：$OS"
+}
+
+# 获取最新版本号
+get_latest_version() {
+    log_step "正在获取最新版本信息..."
+
+    # 尝试从 GitHub API 获取最新版本
+    local response
+    response=$(curl -s https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest)
+
+    if echo "$response" | grep -q '"tag_name"'; then
+        VERSION=$(echo "$response" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+        log_info "最新版本：$VERSION"
     else
-        log_error "Go 安装失败"
+        log_error "无法获取版本信息，请检查网络连接或仓库地址"
         exit 1
     fi
 }
 
-# 检查并安装 Git
-install_git() {
-    if command -v git &> /dev/null; then
-        log_info "Git 已安装：$(git --version)"
-        return
-    fi
+# 下载二进制文件
+download_binary() {
+    log_step "正在下载二进制文件..."
 
-    log_step "正在安装 Git..."
+    # 构建下载 URL
+    local binary_name="subserver_${VERSION}_${OS}_${ARCH}"
+    local download_url="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${VERSION}/${binary_name}"
 
-    case $PM in
-        apt)
-            sudo apt update -y
-            sudo apt install -y git
-            ;;
-        yum|dnf)
-            sudo $PM install -y git
-            ;;
-        pacman)
-            sudo pacman -S --noconfirm git
-            ;;
-        apk)
-            sudo apk add --no-cache git
-            ;;
-    esac
+    # 创建临时目录
+    local temp_dir=$(mktemp -d)
+    local temp_binary="$temp_dir/subserver"
 
-    log_info "Git 安装成功"
-}
+    # 下载二进制文件
+    if curl -L -o "$temp_binary" "$download_url"; then
+        log_info "二进制文件下载成功"
+    else
+        # 尝试不带版本号的命名格式
+        binary_name="subserver-${OS}-${ARCH}"
+        download_url="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${VERSION}/${binary_name}"
 
-# 克隆或更新代码
-clone_repo() {
-    if [ -d "$INSTALL_DIR" ]; then
-        log_step "发现已存在的安装目录"
-        read -p "是否覆盖安装？(y/N): " confirm
-        if [[ $confirm =~ ^[Yy]$ ]]; then
-            sudo rm -rf "$INSTALL_DIR"
+        if curl -L -o "$temp_binary" "$download_url"; then
+            log_info "二进制文件下载成功"
         else
-            log_info "取消安装"
-            exit 0
+            log_error "无法下载二进制文件"
+            log_warn "尝试从源码构建..."
+            rm -rf "$temp_dir"
+            BUILD_FROM_SOURCE=true
+            return 1
         fi
     fi
 
-    log_step "正在克隆代码到 $INSTALL_DIR..."
-    sudo mkdir -p "$INSTALL_DIR"
-    sudo chown "$USER:$USER" "$INSTALL_DIR"
-
-    git clone https://github.com/rinca/subserver.git "$INSTALL_DIR"
-
-    log_info "代码克隆成功"
-}
-
-# 构建项目
-build_project() {
-    log_step "正在构建项目..."
-
-    cd "$INSTALL_DIR"
-
-    # 下载依赖
-    log_info "正在下载 Go 依赖..."
-    go mod download
-
-    # 构建
-    log_info "正在编译二进制文件..."
-    go build -o subserver .
-
-    if [ -f "$INSTALL_DIR/subserver" ]; then
-        chmod +x "$INSTALL_DIR/subserver"
-        log_info "构建成功"
+    # 验证文件是否为有效的 ELF/Mach-O 二进制
+    if file "$temp_binary" | grep -qE "(executable|ELF|Mach-O)"; then
+        log_info "二进制文件验证通过"
     else
-        log_error "构建失败"
+        log_error "下载的文件不是有效的可执行文件"
+        rm -rf "$temp_dir"
         exit 1
     fi
+
+    # 移动到安装目录
+    sudo mkdir -p "$INSTALL_DIR"
+    sudo mv "$temp_binary" "$INSTALL_DIR/subserver"
+    sudo chmod +x "$INSTALL_DIR/subserver"
+    rm -rf "$temp_dir"
+
+    log_info "二进制文件安装成功：$INSTALL_DIR/subserver"
+}
+
+# 从源码构建
+build_from_source() {
+    log_step "正在从源码构建..."
+
+    # 检查 Go 是否安装
+    if ! command -v go &> /dev/null; then
+        log_error "Go 未安装，请先安装 Go"
+        exit 1
+    fi
+
+    local temp_dir=$(mktemp -d)
+    cd "$temp_dir"
+
+    # 克隆仓库
+    log_info "正在克隆仓库..."
+    git clone --depth 1 --branch "${VERSION}" "https://github.com/${REPO_OWNER}/${REPO_NAME}.git" .
+
+    # 构建
+    log_info "正在编译..."
+    go build -o subserver .
+
+    if [ -f "$temp_dir/subserver" ]; then
+        sudo mkdir -p "$INSTALL_DIR"
+        sudo mv "$temp_dir/subserver" "$INSTALL_DIR/subserver"
+        sudo chmod +x "$INSTALL_DIR/subserver"
+        log_info "源码构建成功"
+    else
+        log_error "构建失败"
+        rm -rf "$temp_dir"
+        exit 1
+    fi
+
+    rm -rf "$temp_dir"
 }
 
 # 创建配置文件
 create_config() {
-    log_step "正在创建配置文件..."
+    log_step "配置文件配置..."
 
     if [ -f "$CONFIG_FILE" ]; then
-        log_warn "配置文件已存在，跳过创建"
+        log_warn "配置文件已存在"
         read -p "是否重新配置？(y/N): " confirm
         if [[ ! $confirm =~ ^[Yy]$ ]]; then
+            log_info "使用现有配置文件，跳过创建"
             return
         fi
     fi
 
-    # 交互式配置
     echo ""
     log_info "=== 服务器配置 ==="
+    echo ""
+
+    # HTTP 端口
     read -p "HTTP 端口 (默认 8080): " http_port
     http_port=${http_port:-8080}
 
+    # HTTPS 配置
     read -p "是否启用 HTTPS? (y/N): " enable_https
     if [[ $enable_https =~ ^[Yy]$ ]]; then
         read -p "HTTPS 端口 (默认 443): " https_port
@@ -191,6 +213,28 @@ create_config() {
         tls_enabled="false"
     fi
 
+    # 上传配置
+    echo ""
+    log_info "=== 上传配置 ==="
+    read -p "上传目录路径 (默认 ./uploads): " upload_dir
+    upload_dir=${upload_dir:-./uploads}
+
+    read -p "最大上传文件大小 (MB, 默认 1): " max_upload_size
+    max_upload_size=${max_upload_size:-1}
+
+    # 数据库配置
+    echo ""
+    log_info "=== 数据库配置 ==="
+    read -p "数据库文件路径 (默认 ./data/subserver.db): " db_path
+    db_path=${db_path:-./data/subserver.db}
+
+    # 日志配置
+    echo ""
+    log_info "=== 日志配置 ==="
+    echo "日志级别：info, warn, error, debug (默认 info): "
+    read -p "日志级别 (默认 info): " log_level
+    log_level=${log_level:-info}
+
     # 生成配置文件
     cat > "$CONFIG_FILE" << EOF
 # subserver 配置文件
@@ -199,16 +243,6 @@ create_config() {
 server:
   http_port: $http_port
   https_port: $https_port
-EOF
-
-    if [[ -n "$domains" ]]; then
-        # 将逗号分隔的域名转换为 YAML 数组格式
-        domains_yaml=$(echo "$domains" | tr ',' '\n' | sed 's/^/    - /' | tr -d ' ')
-        echo "  domains:" >> "$CONFIG_FILE"
-        echo "$domains_yaml" >> "$CONFIG_FILE"
-    fi
-
-    cat >> "$CONFIG_FILE" << EOF
 
 tls:
   enabled: $tls_enabled
@@ -217,6 +251,21 @@ tls:
   cert_dir: "./certs"
   acme_dir: ""
   email: "$email"
+EOF
+
+    if [[ -n "$domains" ]]; then
+        cat >> "$CONFIG_FILE" << EOF
+  domains:
+EOF
+        echo "$domains" | tr ',' '\n' | while read -r domain; do
+            domain=$(echo "$domain" | xargs)  # 去除空格
+            if [ -n "$domain" ]; then
+                echo "    - $domain" >> "$CONFIG_FILE"
+            fi
+        done
+    fi
+
+    cat >> "$CONFIG_FILE" << EOF
 
 dns:
   provider: ""
@@ -243,10 +292,25 @@ dns:
     tenant_id: ""
     subscription_id: ""
 
+upload:
+  dir: "$upload_dir"
+  max_size: $max_upload_size
+
+database:
+  sqlite_path: "$db_path"
+
 log:
-  level: info
+  level: $log_level
   format: text
 EOF
+
+    # 创建上传目录
+    sudo mkdir -p "$INSTALL_DIR/uploads"
+    sudo chmod 755 "$INSTALL_DIR/uploads"
+
+    # 创建数据目录
+    sudo mkdir -p "$INSTALL_DIR/data"
+    sudo chmod 755 "$INSTALL_DIR/data"
 
     log_info "配置文件已创建：$CONFIG_FILE"
 }
@@ -264,7 +328,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=$INSTALL_DIR
-ExecStart=$INSTALL_DIR/subserver
+ExecStart=$INSTALL_DIR/subserver --config $CONFIG_FILE
 Restart=on-failure
 RestartSec=5
 LimitNOFILE=65535
@@ -282,14 +346,6 @@ EOF
     log_info "Systemd 服务已创建"
 }
 
-# 创建上传目录
-create_upload_dir() {
-    log_step "正在创建上传目录..."
-    mkdir -p "$INSTALL_DIR/uploads"
-    chmod 755 "$INSTALL_DIR/uploads"
-    log_info "上传目录已创建"
-}
-
 # 启动服务
 start_service() {
     log_step "正在启动服务..."
@@ -301,7 +357,7 @@ start_service() {
     if sudo systemctl is-active --quiet "$SERVICE_NAME"; then
         log_info "服务启动成功"
     else
-        log_warn "服务启动失败，请检查日志：journalctl -u $SERVICE_NAME"
+        log_warn "服务启动失败，请检查日志：journalctl -u $SERVICE_NAME -f"
     fi
 }
 
@@ -342,12 +398,9 @@ uninstall() {
     if [[ $remove_files =~ ^[Yy]$ ]]; then
         sudo rm -rf "$INSTALL_DIR"
     else
-        sudo rm -rf "$INSTALL_DIR/subserver"
-        sudo rm -rf "$INSTALL_DIR/internal"
-        sudo rm -rf "$INSTALL_DIR/go.mod"
-        sudo rm -rf "$INSTALL_DIR/go.sum"
-        sudo rm -rf "$INSTALL_DIR/main.go"
-        sudo rm -rf "$INSTALL_DIR/index.html"
+        sudo rm -f "$INSTALL_DIR/subserver"
+        sudo rm -f "$CONFIG_FILE"
+        sudo rm -rf "$INSTALL_DIR/certs"
     fi
 
     log_info "卸载完成"
@@ -375,6 +428,8 @@ main() {
         echo "  --help, -h         显示帮助信息"
         echo ""
         echo "不带参数时执行安装操作"
+        echo ""
+        echo "本脚本将从 GitHub 下载最新的二进制文件并安装为 systemd 服务"
         exit 0
     fi
 
@@ -384,14 +439,25 @@ main() {
         log_warn "将使用 sudo 提权..."
     fi
 
+    # 检查 curl 是否安装
+    if ! command -v curl &> /dev/null; then
+        log_error "curl 未安装，请先安装 curl"
+        exit 1
+    fi
+
     # 执行安装步骤
-    detect_package_manager
-    install_go
-    install_git
-    clone_repo
-    build_project
+    detect_arch
+    detect_os
+    get_latest_version
+
+    # 尝试下载二进制文件，失败则从源码构建
+    BUILD_FROM_SOURCE=false
+    download_binary
+    if [ "$BUILD_FROM_SOURCE" = true ]; then
+        build_from_source
+    fi
+
     create_config
-    create_upload_dir
     create_systemd_service
     start_service
     show_complete_info
