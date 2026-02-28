@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"subserver/internal/file"
@@ -77,9 +78,25 @@ func (h *Handler) GetRawFile(c *gin.Context) {
 		return
 	}
 
+	// 打开文件
+	f, err := os.Open(filePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "读取文件失败"})
+		return
+	}
+	defer f.Close()
+
+	// 获取文件信息
+	stat, err := f.Stat()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "读取文件信息失败"})
+		return
+	}
+
+	// 设置响应头
 	c.Header("Content-Type", "text/plain; charset=utf-8")
 	c.Header("Content-Disposition", "inline")
-	c.File(filePath)
+	c.DataFromReader(http.StatusOK, stat.Size(), "text/plain; charset=utf-8", f, nil)
 }
 
 // getHost 获取当前请求的主机
