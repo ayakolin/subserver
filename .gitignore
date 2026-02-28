@@ -25,5 +25,11 @@ vendor/
 # Uploads directory
 uploads/
 
+# Certificates directory
+certs/
+
+# Configuration file (may contain secrets)
+config.yaml
+
 # Go workspace file
 go.work
