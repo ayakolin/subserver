@@ -272,22 +272,29 @@
 
         .expire-picker-btn .clear-btn {
             display: none;
-            padding: 4px 10px;
-            font-size: 12px;
-            background: var(--error-bg);
-            color: var(--error);
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            background: transparent;
+            color: var(--text-muted);
             border: none;
-            border-radius: 6px;
+            border-radius: 50%;
             cursor: pointer;
-            font-weight: 500;
+            font-size: 18px;
+            line-height: 1;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
         }
 
         .expire-picker-btn .clear-btn:hover {
-            background: #fee2e2;
+            background: var(--border);
+            color: var(--text);
         }
 
         .expire-picker-btn.has-value .clear-btn {
-            display: block;
+            display: flex;
         }
 
         .expire-presets {
@@ -735,7 +742,7 @@
                     <button type="button" class="expire-picker-btn disabled" id="expirePickerBtn">
                         <span class="icon">📅</span>
                         <span class="text">选择日期</span>
-                        <button type="button" class="clear-btn">清除</button>
+                        <button type="button" class="clear-btn">&times;</button>
                     </button>
                     <div class="expire-presets">
                         <button type="button" class="preset-btn" data-seconds="60">1 分钟</button>
