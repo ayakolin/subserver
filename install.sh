@@ -97,40 +97,74 @@ get_latest_version() {
 download_binary() {
     log_step "正在下载二进制文件..."
 
-    # 构建下载 URL
-    local binary_name="subserver_${VERSION}_${OS}_${ARCH}"
-    local download_url="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${VERSION}/${binary_name}"
-
     # 创建临时目录
     local temp_dir=$(mktemp -d)
     local temp_binary="$temp_dir/subserver"
+    local download_url=""
+    local binary_name=""
+    local found=0
 
-    # 下载二进制文件
-    if curl -L -o "$temp_binary" "$download_url"; then
-        log_info "二进制文件下载成功"
-    else
-        # 尝试不带版本号的命名格式
-        binary_name="subserver-${OS}-${ARCH}"
+    # 尝试多种文件名格式
+    local formats=(
+        "subserver_${VERSION}_${OS}_${ARCH}"
+        "subserver-${OS}-${ARCH}"
+        "subserver-${OS}-x86_64"
+        "subserver-${OS}-amd64"
+        "subserver"
+    )
+
+    log_info "系统信息：OS=$OS, ARCH=$ARCH, VERSION=$VERSION"
+
+    for format in "${formats[@]}"; do
+        binary_name="$format"
         download_url="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${VERSION}/${binary_name}"
+        log_info "尝试下载：$binary_name"
 
-        if curl -L -o "$temp_binary" "$download_url"; then
-            log_info "二进制文件下载成功"
-        else
-            log_error "无法下载二进制文件"
-            log_warn "尝试从源码构建..."
-            rm -rf "$temp_dir"
-            BUILD_FROM_SOURCE=true
-            return 1
+        # 下载文件，使用 -f 参数让 404 时失败
+        local http_code=$(curl -sfL -w "%{http_code}" -o "$temp_binary" "$download_url")
+
+        log_info "HTTP 状态码：$http_code"
+
+        # 检查 HTTP 状态码
+        if [ "$http_code" = "404" ] || [ "$http_code" = "000" ]; then
+            log_warn "文件不存在 (HTTP $http_code)，尝试下一个格式..."
+            rm -f "$temp_binary"
+            continue
         fi
-    fi
 
-    # 验证文件是否为有效的 ELF/Mach-O 二进制
-    if file "$temp_binary" | grep -qE "(executable|ELF|Mach-O)"; then
-        log_info "二进制文件验证通过"
-    else
-        log_error "下载的文件不是有效的可执行文件"
+        # 检查文件是否存在且有内容
+        if [ ! -s "$temp_binary" ]; then
+            log_warn "文件为空，尝试下一个格式..."
+            rm -f "$temp_binary"
+            continue
+        fi
+
+        # 检查是否是 HTML 文件（GitHub 错误页面）
+        if head -c 100 "$temp_binary" | grep -q "<!DOCTYPE html>"; then
+            log_warn "下载的文件是 HTML 页面，尝试下一个格式..."
+            rm -f "$temp_binary"
+            continue
+        fi
+
+        # 检查文件类型是否是二进制文件
+        local file_type=$(file -b "$temp_binary")
+        if echo "$file_type" | grep -qiE "(executable|ELF|Mach-O)"; then
+            log_info "二进制文件下载成功：$file_type"
+            found=1
+            break
+        else
+            log_warn "文件类型不匹配：$file_type，尝试下一个格式..."
+            rm -f "$temp_binary"
+        fi
+    done
+
+    # 检查是否下载成功
+    if [ "$found" -eq 0 ]; then
+        log_error "无法下载二进制文件"
+        log_warn "尝试从源码构建..."
         rm -rf "$temp_dir"
-        exit 1
+        BUILD_FROM_SOURCE=true
+        return 1
     fi
 
     # 检查是否已存在二进制文件
