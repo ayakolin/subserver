@@ -133,6 +133,27 @@ download_binary() {
         exit 1
     fi
 
+    # 检查是否已存在二进制文件
+    if [ -f "$INSTALL_DIR/subserver" ]; then
+        log_warn "发现已安装的二进制文件"
+        read -p "是否覆盖现有安装？(y/N): " confirm
+        if [[ ! $confirm =~ ^[Yy]$ ]]; then
+            log_info "取消覆盖，保留现有版本"
+            rm -rf "$temp_dir"
+            # 询问是否继续配置
+            read -p "是否继续配置服务？(y/N): " continue_config
+            if [[ $continue_config =~ ^[Yy]$ ]]; then
+                return 0
+            else
+                log_info "取消安装"
+                exit 0
+            fi
+        fi
+        # 用户选择覆盖，先备份旧版本
+        log_info "备份旧版本到 ${INSTALL_DIR}/subserver.bak"
+        sudo cp "$INSTALL_DIR/subserver" "${INSTALL_DIR}/subserver.bak"
+    fi
+
     # 移动到安装目录
     sudo mkdir -p "$INSTALL_DIR"
     sudo mv "$temp_binary" "$INSTALL_DIR/subserver"
