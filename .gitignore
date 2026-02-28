@@ -22,9 +22,6 @@ vendor/
 *.swo
 *~
 
-# Claude Code settings
-.claude/
-
 # Uploads directory
 uploads/
 
@@ -33,7 +30,6 @@ certs/
 
 # Configuration file (may contain secrets)
 config.yaml
-CLAUDE.md
 
 # Go workspace file
 go.work
