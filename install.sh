@@ -31,7 +31,7 @@ INSTALL_DIR="/opt/subserver"
 SERVICE_NAME="subserver"
 CONFIG_FILE="$INSTALL_DIR/config.yaml"
 SYSTEMD_SERVICE="/etc/systemd/system/${SERVICE_NAME}.service"
-REPO_OWNER="rinca"
+REPO_OWNER="ayakolin"
 REPO_NAME="subserver"
 
 # 检测系统架构
@@ -173,12 +173,26 @@ build_from_source() {
         exit 1
     fi
 
+    # 检查 git 是否安装
+    if ! command -v git &> /dev/null; then
+        log_error "git 未安装，请先安装 git"
+        exit 1
+    fi
+
     local temp_dir=$(mktemp -d)
     cd "$temp_dir"
 
-    # 克隆仓库
+    # 克隆仓库 - 使用环境变量避免认证提示
     log_info "正在克隆仓库..."
-    git clone --depth 1 --branch "${VERSION}" "https://github.com/${REPO_OWNER}/${REPO_NAME}.git" .
+    export GIT_TERMINAL_PROMPT=0
+    if ! git clone --depth 1 --branch "${VERSION}" "https://github.com/${REPO_OWNER}/${REPO_NAME}.git" . 2>&1; then
+        log_error "克隆仓库失败，请检查："
+        log_error "  1. 仓库地址是否正确：https://github.com/${REPO_OWNER}/${REPO_NAME}"
+        log_error "  2. 网络连接是否正常"
+        log_error "  3. 仓库是否存在且为公开"
+        rm -rf "$temp_dir"
+        exit 1
+    fi
 
     # 构建
     log_info "正在编译..."
