@@ -319,20 +319,31 @@ prompt_yes_no() {
 
 # 交互式配置
 interactive_setup() {
+    # 管道模式下跳过配置，使用参数或默认值
+    if [ "$INTERACTIVE" = "false" ]; then
+        return
+    fi
+
     echo ""
     log_step "开始配置 subserver"
     echo "================================"
     echo ""
 
-    # HTTP 端口
-    prompt_input "HTTP 端口" "$DEFAULT_PORT" "USER_PORT"
+    # HTTP 端口（如果用户已通过参数设置则跳过）
+    if [ -z "$USER_PORT" ]; then
+        prompt_input "HTTP 端口" "$DEFAULT_PORT" "USER_PORT"
+    fi
 
-    # 是否启用 HTTPS
-    prompt_yes_no "启用 HTTPS" "$DEFAULT_TLS" "USER_TLS"
+    # 是否启用 HTTPS（如果用户已通过参数设置则跳过）
+    if [ -z "$USER_TLS" ]; then
+        prompt_yes_no "启用 HTTPS" "$DEFAULT_TLS" "USER_TLS"
+    fi
 
     if [ "$USER_TLS" = "true" ]; then
         # HTTPS 端口
-        prompt_input "HTTPS 端口" "$DEFAULT_TLS_PORT" "USER_TLS_PORT"
+        if [ -z "$USER_TLS_PORT" ]; then
+            prompt_input "HTTPS 端口" "$DEFAULT_TLS_PORT" "USER_TLS_PORT"
+        fi
 
         # 证书类型选择
         echo ""
@@ -354,20 +365,31 @@ interactive_setup() {
             prompt_input "私钥文件路径" "" "USER_KEY_FILE"
         else
             USER_LOCAL_TLS="false"
-            prompt_input "域名（多个用逗号分隔）" "" "USER_DOMAIN"
-            prompt_input "SSL 证书邮箱" "" "USER_TLS_EMAIL"
+            # 域名和邮箱如果用户已通过参数设置则跳过
+            if [ -z "$USER_DOMAIN" ]; then
+                prompt_input "域名（多个用逗号分隔）" "" "USER_DOMAIN"
+            fi
+            if [ -z "$USER_TLS_EMAIL" ]; then
+                prompt_input "SSL 证书邮箱" "" "USER_TLS_EMAIL"
+            fi
         fi
     fi
 
-    # 数据库路径
-    prompt_input "数据库文件路径" "$DEFAULT_DB" "USER_DB"
+    # 数据库路径（如果用户已通过参数设置则跳过）
+    if [ -z "$USER_DB" ]; then
+        prompt_input "数据库文件路径" "$DEFAULT_DB" "USER_DB"
+    fi
 
-    # 日志级别
-    prompt_input "日志级别 (debug/info/warn/error)" "$DEFAULT_LOG" "USER_LOG"
+    # 日志级别（如果用户已通过参数设置则跳过）
+    if [ -z "$USER_LOG" ]; then
+        prompt_input "日志级别 (debug/info/warn/error)" "$DEFAULT_LOG" "USER_LOG"
+    fi
 
-    # 证书目录
+    # 证书目录（如果用户已通过参数设置则跳过）
     if [ "$USER_TLS" = "true" ] && [ "$USER_LOCAL_TLS" = "false" ]; then
-        prompt_input "SSL 证书目录" "$DEFAULT_CERT_DIR" "USER_CERT_DIR"
+        if [ -z "$USER_CERT_DIR" ]; then
+            prompt_input "SSL 证书目录" "$DEFAULT_CERT_DIR" "USER_CERT_DIR"
+        fi
     fi
 
     echo ""
