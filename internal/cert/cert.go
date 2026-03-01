@@ -22,6 +22,12 @@ func SetupTLS(cfg *config.Config) error {
 		return nil
 	}
 
+	// 根据域名获取证书
+	domains := cfg.Domains
+	if len(domains) == 0 {
+		return fmt.Errorf("启用 HTTPS 时必须配置域名")
+	}
+
 	// 自动证书管理配置
 	certmagic.DefaultACME.Agreed = true
 	certmagic.DefaultACME.Email = cfg.TLSEmail
@@ -32,11 +38,9 @@ func SetupTLS(cfg *config.Config) error {
 		Path: cfg.CertDir,
 	}
 
-	// 根据域名获取证书
-	domains := cfg.Domains
-	if len(domains) == 0 {
-		return fmt.Errorf("启用 HTTPS 时必须配置域名")
-	}
+	// 启用 HTTP 挑战，禁用 TLS-ALPN 挑战（文件验证方式）
+	certmagic.DefaultACME.DisableHTTPChallenge = false
+	certmagic.DefaultACME.DisableTLSALPNChallenge = true
 
 	// 创建验证目录
 	validationDir := filepath.Join(cfg.CertDir, ".well-known", "acme-challenge")
@@ -44,14 +48,14 @@ func SetupTLS(cfg *config.Config) error {
 		return fmt.Errorf("创建验证目录失败：%w", err)
 	}
 
-	// 启用 HTTP 挑战，禁用 TLS-ALPN 挑战（文件验证方式）
-	certmagic.DefaultACME.DisableHTTPChallenge = false
-	certmagic.DefaultACME.DisableTLSALPNChallenge = true
+	// 使用 NewDefault 创建配置（会自动初始化 cache）
+	// 这是 certmagic v0.20+ 的推荐用法
+	cm := certmagic.NewDefault()
 
 	// 同步获取和管理证书（包含自动续期）
 	// ManageSync 会阻塞直到证书获取成功，之后会在后台自动续期
 	// 证书会在到期前 30 天自动续期
-	err := certmagic.Default.ManageSync(context.Background(), domains)
+	err := cm.ManageSync(context.Background(), domains)
 	if err != nil {
 		return fmt.Errorf("获取证书失败：%w", err)
 	}
@@ -91,19 +95,31 @@ func StartHTTPChallengeServer(port string, certDir string) error {
 }
 
 // GetTLSConfig 获取 TLS 配置
+// 注意：此函数假设证书已经通过 SetupTLS 或 ManageSync 进行管理
 func GetTLSConfig(domains []string) (*tls.Config, error) {
-	return certmagic.TLS(domains)
+	// 使用 NewDefault 创建配置（包含已初始化的 cache）
+	cm := certmagic.NewDefault()
+
+	// TLSConfig 不需要参数，它会从 cache 中获取已管理的证书
+	// 调用前需要确保证书已经通过 ManageSync 管理
+	tlsConfig := cm.TLSConfig()
+
+	// 设置 ALPN 协议以支持 HTTP/2 和 HTTP/1.1，同时保留 ACME TLS-ALPN 挑战
+	tlsConfig.NextProtos = append([]string{"h2", "http/1.1"}, tlsConfig.NextProtos...)
+
+	return tlsConfig, nil
 }
 
 // RenewCertificate 手动续期证书
 func RenewCertificate(domains []string, certDir string) error {
-	// 使用默认的 ACME 配置
+	// 使用 NewDefault 创建配置（包含已初始化的 cache）
+	cm := certmagic.NewDefault()
 	ctx := context.Background()
 	for _, domain := range domains {
 		log.Printf("正在续期证书：%s", domain)
 		// RenewCertSync 会检查是否需要续期（到期前 30 天）
 		// force=true 时强制续期
-		if err := certmagic.Default.RenewCertSync(ctx, domain, false); err != nil {
+		if err := cm.RenewCertSync(ctx, domain, false); err != nil {
 			return fmt.Errorf("续期证书 %s 失败：%w", domain, err)
 		}
 	}
