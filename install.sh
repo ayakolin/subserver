@@ -273,11 +273,16 @@ prompt_input() {
         return
     fi
 
-    read -r input
-    if [ -z "$input" ] && [ -n "$default" ]; then
-        eval "${result_var}=\"${default}\""
+    # 从 /dev/tty 读取，支持管道模式下的交互
+    if read -r input < /dev/tty 2>/dev/null; then
+        if [ -z "$input" ] && [ -n "$default" ]; then
+            eval "${result_var}=\"${default}\""
+        else
+            eval "${result_var}=\"${input}\""
+        fi
     else
-        eval "${result_var}=\"${input}\""
+        # /dev/tty 不可用，使用默认值
+        eval "${result_var}=\"${default}\""
     fi
 }
 
@@ -302,27 +307,30 @@ prompt_yes_no() {
         return
     fi
 
-    read -r input
-    if [ -z "$input" ]; then
-        eval "${result_var}=\"${default}\""
+    # 从 /dev/tty 读取，支持管道模式下的交互
+    if read -r input < /dev/tty 2>/dev/null; then
+        if [ -z "$input" ]; then
+            eval "${result_var}=\"${default}\""
+        else
+            case "$(echo "$input" | tr '[:upper:]' '[:lower:]')" in
+                y|yes|true|1)
+                    eval "${result_var}=\"true\""
+                    ;;
+                *)
+                    eval "${result_var}=\"false\""
+                    ;;
+            esac
+        fi
     else
-        case "$(echo "$input" | tr '[:upper:]' '[:lower:]')" in
-            y|yes|true|1)
-                eval "${result_var}=\"true\""
-                ;;
-            *)
-                eval "${result_var}=\"false\""
-                ;;
-        esac
+        # /dev/tty 不可用，使用默认值
+        eval "${result_var}=\"${default}\""
     fi
 }
 
 # 交互式配置
 interactive_setup() {
-    # 管道模式下跳过配置，使用参数或默认值
-    if [ "$PIPE_MODE" = "true" ]; then
-        log_info "管道模式下跳过交互配置，使用默认值"
-        log_info "如需交互配置，请下载脚本后运行：bash install.sh"
+    # 非交互模式下跳过配置，使用参数或默认值
+    if [ "$INTERACTIVE" = "false" ]; then
         return
     fi
 
@@ -354,8 +362,12 @@ interactive_setup() {
         echo "  2) 使用本地已有证书文件"
         echo -n "请选择 [1]: "
 
-        read -r cert_choice
-        [ -z "$cert_choice" ] && cert_choice="1"
+        # 从 /dev/tty 读取
+        if read -r cert_choice < /dev/tty 2>/dev/null; then
+            [ -z "$cert_choice" ] && cert_choice="1"
+        else
+            cert_choice="1"
+        fi
 
         if [ "$cert_choice" = "2" ]; then
             USER_LOCAL_TLS="true"
@@ -830,10 +842,17 @@ REMOVE_DATA_ON_UNINSTALL="false"
 
 # 检测是否在管道模式下运行（curl | bash）
 PIPE_MODE="false"
+INTERACTIVE="true"
 if [ ! -t 0 ]; then
     # 标准输入不是终端，说明是在管道模式下
     PIPE_MODE="true"
-    INTERACTIVE="false"
+    # 检查是否可以从 /dev/tty 读取（用于管道模式下的交互）
+    if [ -t 1 ] && [ -e /dev/tty ]; then
+        # 输出到终端且 /dev/tty 存在，可以交互
+        INTERACTIVE="true"
+    else
+        INTERACTIVE="false"
+    fi
 fi
 
 # 手动解析所有参数（支持长参数）
