@@ -1,12 +1,14 @@
 package file
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -55,6 +57,80 @@ type FileUpload struct {
 	CreatedAt time.Time
 	ExpiresAt *time.Time
 	Once      bool
+}
+
+// UploadJob 上传任务
+type UploadJob struct {
+	File      *multipart.FileHeader
+	Once      bool
+	ExpiresAt *time.Time
+	Result    chan<- UploadResult
+}
+
+// UploadResult 上传结果
+type UploadResult struct {
+	Upload *FileUpload
+	Err    error
+}
+
+// Cleaner 过期文件清理器
+type Cleaner struct {
+	db       *sql.DB
+	interval time.Duration
+	cancel   context.CancelFunc
+	wg       sync.WaitGroup
+}
+
+// NewCleaner 创建清理器
+func NewCleaner(db *sql.DB, interval time.Duration) *Cleaner {
+	return &Cleaner{
+		db:       db,
+		interval: interval,
+	}
+}
+
+// Start 启动清理器
+func (c *Cleaner) Start() {
+	ctx, cancel := context.WithCancel(context.Background())
+	c.cancel = cancel
+	c.wg.Add(1)
+
+	go func() {
+		defer c.wg.Done()
+		ticker := time.NewTicker(c.interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				c.cleanExpired()
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+}
+
+// Stop 停止清理器
+func (c *Cleaner) Stop() {
+	if c.cancel != nil {
+		c.cancel()
+	}
+	c.wg.Wait()
+}
+
+// cleanExpired 清理过期文件
+func (c *Cleaner) cleanExpired() {
+	query := `DELETE FROM files WHERE expires_at IS NOT NULL AND expires_at < ?`
+	result, err := c.db.Exec(query, time.Now())
+	if err != nil {
+		return
+	}
+
+	deleted, _ := result.RowsAffected()
+	if deleted > 0 {
+		fmt.Printf("[Cleaner] 清理了 %d 个过期文件\n", deleted)
+	}
 }
 
 // GenerateID 生成唯一的文件 ID (GUID 格式)

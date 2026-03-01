@@ -5,6 +5,7 @@ import (
 	"embed"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,20 +16,58 @@ import (
 var indexHTML embed.FS
 
 const (
-	maxSize = 1 << 20 // 1MB
+	maxSize     = 1 << 20 // 1MB
+	workerCount = 8       // 工作协程数量
 )
 
 // Handler HTTP 处理器
 type Handler struct {
-	db      *sql.DB
-	maxSize int64
+	db        *sql.DB
+	maxSize   int64
+	uploadWg  sync.WaitGroup
+	jobChan   chan file.UploadJob
+	cleaner   *file.Cleaner
+	hostCache string
+	hostMu    sync.RWMutex
 }
 
 // NewHandler 创建新的 Handler
 func NewHandler(db *sql.DB) *Handler {
-	return &Handler{
+	h := &Handler{
 		db:      db,
 		maxSize: maxSize,
+		jobChan: make(chan file.UploadJob, workerCount*2),
+	}
+
+	// 启动工作池
+	for i := 0; i < workerCount; i++ {
+		go h.uploadWorker()
+	}
+
+	// 启动过期文件清理器（每 5 分钟清理一次）
+	h.cleaner = file.NewCleaner(db, 5*time.Minute)
+	h.cleaner.Start()
+
+	return h
+}
+
+// uploadWorker 文件上传工作协程
+func (h *Handler) uploadWorker() {
+	for job := range h.jobChan {
+		upload, err := file.SaveFile(h.db, job.File, job.Once, job.ExpiresAt)
+		job.Result <- file.UploadResult{
+			Upload: upload,
+			Err:    err,
+		}
+	}
+}
+
+// Shutdown 优雅关闭处理器
+func (h *Handler) Shutdown() {
+	close(h.jobChan)
+	h.uploadWg.Wait()
+	if h.cleaner != nil {
+		h.cleaner.Stop()
 	}
 }
 
@@ -40,7 +79,7 @@ type UploadResponse struct {
 	ExpiresAt *int64 `json:"expires_at,omitempty"`
 }
 
-// Upload 文件上传处理
+// Upload 文件上传处理（异步）
 func (h *Handler) Upload(c *gin.Context) {
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
@@ -68,17 +107,28 @@ func (h *Handler) Upload(c *gin.Context) {
 		}
 	}
 
-	// 保存文件到数据库
-	upload, err := file.SaveFile(h.db, fileHeader, once, expiresAt)
-	if err != nil {
+	// 创建结果通道
+	resultChan := make(chan file.UploadResult, 1)
+
+	// 发送任务到工作池
+	h.jobChan <- file.UploadJob{
+		File:      fileHeader,
+		Once:      once,
+		ExpiresAt: expiresAt,
+		Result:    resultChan,
+	}
+
+	// 等待结果
+	result := <-resultChan
+	if result.Err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "保存文件失败"})
 		return
 	}
 
 	// 返回分享链接
-	rawURL := getHost(c) + "/raw/" + upload.ID
+	rawURL := h.getHost(c) + "/raw/" + result.Upload.ID
 	response := UploadResponse{
-		ID:     upload.ID,
+		ID:     result.Upload.ID,
 		RawURL: rawURL,
 		Once:   once,
 	}
@@ -89,7 +139,7 @@ func (h *Handler) Upload(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// GetRawFile 获取文件内容
+// GetRawFile 获取文件内容（使用只读查询优化）
 func (h *Handler) GetRawFile(c *gin.Context) {
 	id := c.Param("id")
 
@@ -112,13 +162,27 @@ func (h *Handler) GetRawFile(c *gin.Context) {
 	c.Data(http.StatusOK, "text/plain; charset=utf-8", f.Content)
 }
 
-// getHost 获取当前请求的主机
-func getHost(c *gin.Context) string {
+// getHost 获取当前请求的主机（带缓存）
+func (h *Handler) getHost(c *gin.Context) string {
+	h.hostMu.RLock()
+	if h.hostCache != "" {
+		h.hostMu.RUnlock()
+		return h.hostCache
+	}
+	h.hostMu.RUnlock()
+
 	host := c.Request.Host
 	if host == "" {
-		return "http://localhost:8080"
+		host = "http://localhost:8080"
+	} else {
+		host = "http://" + host
 	}
-	return "http://" + host
+
+	h.hostMu.Lock()
+	h.hostCache = host
+	h.hostMu.Unlock()
+
+	return host
 }
 
 // Index 上传页面

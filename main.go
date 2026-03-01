@@ -1,14 +1,17 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -89,7 +92,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 初始化数据库
+	// 初始化数据库（使用优化的连接池配置）
 	db, err := initDatabase(cfg.DBPath)
 	if err != nil {
 		fmt.Printf("无法初始化数据库：%v\n", err)
@@ -111,12 +114,36 @@ func main() {
 	h := handler.NewHandler(db)
 	h.RegisterRoutes(router)
 
-	// 创建并启动服务器
+	// 创建服务器
 	srv := server.NewServer(cfg, router)
-	if err := srv.Start(); err != nil {
-		log.Printf("服务器错误：%v", err)
-		os.Exit(1)
+	srv.SetHandler(h)
+
+	// 设置信号处理实现优雅关闭
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	// 在后台启动服务器
+	go func() {
+		if err := srv.Start(); err != nil {
+			log.Printf("服务器错误：%v", err)
+			os.Exit(1)
+		}
+	}()
+
+	// 等待退出信号
+	sig := <-sigChan
+	log.Printf("收到信号 %v，正在优雅关闭...", sig)
+
+	// 创建关闭上下文
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// 优雅关闭
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Printf("关闭时出错：%v", err)
 	}
+
+	log.Printf("服务器已停止")
 }
 
 // parseDomains 解析域名字符串
@@ -151,17 +178,18 @@ func initDatabase(dbPath string) (*sql.DB, error) {
 	return db, nil
 }
 
-// openSQLite 打开 SQLite 数据库
+// openSQLite 打开 SQLite 数据库（优化连接池）
 func openSQLite(path string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
 		return nil, err
 	}
 
-	// SQLite 优化配置
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(5 * 60 * time.Second)
+	// SQLite 优化配置（高并发）
+	db.SetMaxOpenConns(100)         // 最大打开连接数
+	db.SetMaxIdleConns(25)          // 最大空闲连接数
+	db.SetConnMaxLifetime(30 * time.Minute) // 连接最大生命周期
+	db.SetConnMaxIdleTime(5 * time.Minute)  // 连接最大空闲时间
 
 	// 测试连接
 	if err := db.Ping(); err != nil {
