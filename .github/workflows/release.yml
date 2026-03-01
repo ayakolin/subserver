@@ -65,17 +65,15 @@ jobs:
             echo "checksum_path=${{ env.binary_name }}.tar.gz.sha256" >> $GITHUB_ENV
           fi
 
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v2
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          files: |
+          name: assets-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
             ${{ env.asset_path }}
             ${{ env.checksum_path }}
-          fail_on_unmatched_files: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  generate-release-notes:
+  release:
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -84,8 +82,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: assets-*
+          merge-multiple: true
+
       - name: Generate release notes
-        id: notes
         run: |
           TAG=${{ github.ref_name }}
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 $TAG^ 2>/dev/null || echo "")
@@ -102,15 +105,14 @@ jobs:
           fi
 
           echo "" >> release_notes.md
-          echo "" >> release_notes.md
-          echo "### 下载" >> release_notes.md
-          echo "" >> release_notes.md
-          echo "请查看附件中对应平台的二进制文件。" >> release_notes.md
 
-      - name: Update release notes
+      - name: Create release
         uses: softprops/action-gh-release@v2
         with:
+          files: |
+            *.tar.gz
+            *.tar.gz.sha256
           body_path: release_notes.md
-          tag_name: ${{ github.ref_name }}
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
