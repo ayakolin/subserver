@@ -12,6 +12,7 @@
 - **安全存储**：SQLite 数据库存储，自动清理过期数据
 - **简洁界面**：现代化设计，支持拖拽上传
 - **纯文本输出**：适合分享配置文件、代码片段等
+- **HTTPS 支持**：自动申请 Let's Encrypt 证书，支持文件验证和自动续期
 
 ## 高并发特性
 
@@ -51,11 +52,14 @@ go build -o subserver .
 | `-p` | HTTP 端口 | `8080` |
 | `-tls` | 启用 HTTPS | `false` |
 | `-tls-port` | HTTPS 端口 | `443` |
+| `-local-tls` | 使用本地证书文件 | `false` |
+| `-cert-file` | 证书文件路径（与 `-local-tls` 一起使用） | - |
+| `-key-file` | 私钥文件路径（与 `-local-tls` 一起使用） | - |
 | `-d` | 域名（多个用逗号分隔） | - |
 | `-tls-email` | SSL 证书邮箱 | - |
 | `-db` | 数据库文件路径 | `./data/subserver.db` |
 | `-log` | 日志级别 | `info` |
-| `-cert-dir` | SSL 证书目录 | `./certs` |
+| `-cert-dir` | SSL 证书目录（含验证文件） | `./certs` |
 
 **示例：**
 
@@ -69,12 +73,46 @@ go build -o subserver .
 # 指定域名
 ./subserver -p 8080 -d example.com
 
-# 启用 HTTPS
+# 启用 HTTPS（自动申请 Let's Encrypt 证书）
 ./subserver -tls -d example.com -tls-email admin@example.com
+
+# 使用本地证书文件
+./subserver -tls -local-tls -cert-file ./certs/cert.pem -key-file ./certs/key.pem
 
 # 完整配置
 ./subserver -p 8080 -tls -d example.com -tls-email admin@example.com -db ./data/db.sqlite3 -log debug
 ```
+
+## HTTPS 证书自动续期
+
+### 文件验证方式
+
+本服务器使用 CertMagic 库实现 HTTPS 证书的自动申请和续期功能。证书存储和验证文件都保存在 `cert-dir` 指定的目录中。
+
+**工作原理：**
+
+1. 启动时自动检查证书是否存在，不存在则申请
+2. 证书会在到期前 30 天自动续期（后台进行）
+3. 使用 HTTP 文件验证方式，需要在 80 端口响应 Let's Encrypt 的验证请求
+
+**目录结构：**
+
+```
+certs/
+├── .well-known/
+│   └── acme-challenge/    # HTTP 验证文件目录
+└── certificates/           # 证书存储目录
+    └── <domain>/
+        ├── <domain>.crt    # 证书文件
+        └── <domain>.key    # 私钥文件
+```
+
+**注意事项：**
+
+1. 服务器必须能够在 80 端口响应 ACME 挑战请求（用于证书验证）
+2. 当前实现会在应用内部启动一个临时的 HTTP 服务器处理验证
+3. 确保证书目录有写权限
+4. 首次启动时需要能够访问公网（连接 Let's Encrypt）
 
 ## 使用方法
 

@@ -249,12 +249,14 @@ func optimizeTLSConfig(cfg *tls.Config) *tls.Config {
 
 // httpRedirectHandler HTTP 重定向到 HTTPS
 func (s *Server) httpRedirectHandler(w http.ResponseWriter, r *http.Request) {
-	// 跳过 ACME challenge
+	// 跳过 ACME challenge（文件验证方式）
 	if certmagic.LooksLikeHTTPChallenge(r) {
+		// 使用 CertMagic 的默认 HTTP 挑战处理器
 		certmagic.DefaultACME.HTTPChallengeHandler(http.NotFoundHandler()).ServeHTTP(w, r)
 		return
 	}
 
+	// HTTP -> HTTPS 重定向
 	toURL := "https://" + r.Host + r.URL.RequestURI()
 	http.Redirect(w, r, toURL, http.StatusMovedPermanently)
 }
