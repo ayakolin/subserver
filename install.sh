@@ -188,6 +188,12 @@ download_binary() {
     # 解压文件
     log_step "解压文件..."
     if [ "$extension" = "zip" ]; then
+        if ! command -v unzip &> /dev/null; then
+            log_error "需要安装 unzip 来解压 zip 文件"
+            cd - > /dev/null
+            rm -rf "$tmp_dir"
+            return 1
+        fi
         unzip -o "$archive_name" >/dev/null 2>&1
     else
         tar -xzf "$archive_name"
@@ -469,13 +475,22 @@ start_service() {
     log_step "启动服务..."
 
     # 重新加载 systemd
-    run_cmd systemctl daemon-reload
+    if ! run_cmd systemctl daemon-reload 2>&1; then
+        log_error "systemctl daemon-reload 失败"
+        return 1
+    fi
 
     # 启用服务
-    run_cmd systemctl enable "$SERVICE_NAME"
+    if ! run_cmd systemctl enable "$SERVICE_NAME" 2>&1; then
+        log_warn "systemctl enable 失败，服务可能已存在"
+    fi
 
     # 启动服务
-    run_cmd systemctl start "$SERVICE_NAME"
+    if ! run_cmd systemctl start "$SERVICE_NAME" 2>&1; then
+        log_error "服务启动失败"
+        run_cmd systemctl status "$SERVICE_NAME" --no-pager -l 2>&1 || true
+        return 1
+    fi
 
     # 检查状态
     sleep 2
@@ -483,7 +498,7 @@ start_service() {
         log_info "服务启动成功"
         run_cmd systemctl status "$SERVICE_NAME" --no-pager -l
     else
-        log_error "服务启动失败"
+        log_error "服务状态异常"
         run_cmd systemctl status "$SERVICE_NAME" --no-pager -l
         return 1
     fi
@@ -669,7 +684,27 @@ do_uninstall() {
 
 # 检测是否支持 systemd
 has_systemd() {
-    [ -d "/run/systemd/system" ] || [ -f "/run/systemd/container" ]
+    # 首先检查 systemctl 命令是否存在
+    if ! command -v systemctl &> /dev/null; then
+        return 1
+    fi
+
+    # 检查是否在容器中运行（某些容器没有完整的 systemd）
+    if [ -f /.dockerenv ] || [ -f /run/.containerenv ]; then
+        return 1
+    fi
+
+    # 检查 systemd 是否正在运行
+    if [ -d "/run/systemd/system" ] || [ -f "/run/systemd/container" ]; then
+        return 0
+    fi
+
+    # 备用检测：尝试运行 systemctl --version
+    if systemctl --version &> /dev/null; then
+        return 0
+    fi
+
+    return 1
 }
 
 # 主函数
@@ -692,11 +727,24 @@ main() {
         exit 1
     fi
 
-    if [ "$os" = "linux" ]; then
-        if ! command -v tar &> /dev/null; then
-            log_error "需要安装 tar"
-            exit 1
-        fi
+    if ! command -v tar &> /dev/null; then
+        log_error "需要安装 tar"
+        exit 1
+    fi
+
+    if ! command -v gzip &> /dev/null; then
+        log_error "需要安装 gzip"
+        exit 1
+    fi
+
+    if ! command -v sha256sum &> /dev/null; then
+        log_warn "未找到 sha256sum，将跳过 checksum 验证"
+    fi
+
+    # 检查 sudo 是否存在（非 root 用户需要）
+    if ! is_root && ! command -v sudo &> /dev/null; then
+        log_error "非 root 用户需要 sudo 命令，请安装：apt-get install sudo"
+        exit 1
     fi
 
     # 获取最新版本
@@ -724,10 +772,13 @@ main() {
         # 检查 systemd
         if has_systemd; then
             create_service
-            start_service
+            if ! start_service; then
+                log_warn "systemd 服务启动失败，你可以手动运行："
+                log_warn "  subserver -p ${USER_PORT} -db ${USER_DB} -log ${USER_LOG}"
+            fi
         else
             log_warn "未检测到 systemd，跳过服务创建"
-            log_info "请手动运行：subserver"
+            log_info "请手动运行：subserver -p ${USER_PORT} -db ${USER_DB} -log ${USER_LOG}"
         fi
 
         show_summary
