@@ -121,7 +121,7 @@ func main() {
 	router := newEngine()
 
 	// 创建处理器并注册路由
-	h := handler.NewHandler(db)
+	h := handler.NewHandler(db, cfg.EnableTLS, cfg.HTTPSPort)
 	h.RegisterRoutes(router)
 
 	// 创建服务器

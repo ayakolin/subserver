@@ -38,10 +38,12 @@ type Handler struct {
 	hostMu    sync.RWMutex
 	auth      *auth.Auth
 	shareMgr  *share.Manager
+	tlsEnabled bool
+	tlsPort   string
 }
 
 // NewHandler 创建新的 Handler
-func NewHandler(db *sql.DB) *Handler {
+func NewHandler(db *sql.DB, tlsEnabled bool, tlsPort string) *Handler {
 	// 生成或获取 JWT 密钥
 	jwtSecret := getOrCreateJWTSecret(db)
 
@@ -51,6 +53,8 @@ func NewHandler(db *sql.DB) *Handler {
 		jobChan: make(chan file.UploadJob, workerCount*2),
 		auth:    auth.NewAuth(db, jwtSecret),
 		shareMgr: share.NewManager(db),
+		tlsEnabled: tlsEnabled,
+		tlsPort:   tlsPort,
 	}
 
 	// 启动工作池
@@ -268,7 +272,12 @@ func (h *Handler) getHost(c *gin.Context) string {
 
 	host := c.Request.Host
 	if host == "" {
-		host = "http://localhost:8080"
+		host = "localhost:" + h.tlsPort
+	}
+
+	// 根据是否启用 HTTPS 选择协议
+	if h.tlsEnabled {
+		host = "https://" + host
 	} else {
 		host = "http://" + host
 	}
