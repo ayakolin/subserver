@@ -255,157 +255,6 @@ download_binary() {
     return 0
 }
 
-# 提示用户输入（带默认值）
-prompt_input() {
-    local prompt="$1"
-    local default="$2"
-    local result_var="$3"
-
-    if [ -n "$default" ]; then
-        echo -n "${prompt} [${default}]: "
-    else
-        echo -n "${prompt}: "
-    fi
-
-    if [ "$INTERACTIVE" = "false" ]; then
-        echo ""
-        eval "${result_var}=\"${default}\""
-        return
-    fi
-
-    # 从 /dev/tty 读取，支持管道模式下的交互
-    if read -r input < /dev/tty 2>/dev/null; then
-        if [ -z "$input" ] && [ -n "$default" ]; then
-            eval "${result_var}=\"${default}\""
-        else
-            eval "${result_var}=\"${input}\""
-        fi
-    else
-        # /dev/tty 不可用，使用默认值
-        eval "${result_var}=\"${default}\""
-    fi
-}
-
-# 提示用户选择（是/否）
-prompt_yes_no() {
-    local prompt="$1"
-    local default="$2"
-    local result_var="$3"
-
-    local default_display
-    if [ "$default" = "true" ] || [ "$default" = "yes" ] || [ "$default" = "1" ]; then
-        default_display="Y/n"
-    else
-        default_display="y/N"
-    fi
-
-    echo -n "${prompt} [${default_display}]: "
-
-    if [ "$INTERACTIVE" = "false" ]; then
-        echo ""
-        eval "${result_var}=\"${default}\""
-        return
-    fi
-
-    # 从 /dev/tty 读取，支持管道模式下的交互
-    if read -r input < /dev/tty 2>/dev/null; then
-        if [ -z "$input" ]; then
-            eval "${result_var}=\"${default}\""
-        else
-            case "$(echo "$input" | tr '[:upper:]' '[:lower:]')" in
-                y|yes|true|1)
-                    eval "${result_var}=\"true\""
-                    ;;
-                *)
-                    eval "${result_var}=\"false\""
-                    ;;
-            esac
-        fi
-    else
-        # /dev/tty 不可用，使用默认值
-        eval "${result_var}=\"${default}\""
-    fi
-}
-
-# 交互式配置
-interactive_setup() {
-    # 非交互模式下跳过配置，使用参数或默认值
-    if [ "$INTERACTIVE" = "false" ]; then
-        return
-    fi
-
-    echo ""
-    log_step "开始配置 subserver"
-    echo "================================"
-    echo ""
-
-    # HTTP 端口（如果用户已通过参数设置则跳过）
-    if [ -z "$USER_PORT" ]; then
-        prompt_input "HTTP 端口" "$DEFAULT_PORT" "USER_PORT"
-    fi
-
-    # 是否启用 HTTPS（如果用户已通过参数设置则跳过）
-    if [ -z "$USER_TLS" ]; then
-        prompt_yes_no "启用 HTTPS" "$DEFAULT_TLS" "USER_TLS"
-    fi
-
-    if [ "$USER_TLS" = "true" ]; then
-        # HTTPS 端口
-        if [ -z "$USER_TLS_PORT" ]; then
-            prompt_input "HTTPS 端口" "$DEFAULT_TLS_PORT" "USER_TLS_PORT"
-        fi
-
-        # 证书类型选择
-        echo ""
-        echo "请选择证书获取方式:"
-        echo "  1) 使用 Let's Encrypt 自动申请证书（需要域名）"
-        echo "  2) 使用本地已有证书文件"
-        echo -n "请选择 [1]: "
-
-        # 从 /dev/tty 读取
-        if read -r cert_choice < /dev/tty 2>/dev/null; then
-            [ -z "$cert_choice" ] && cert_choice="1"
-        else
-            cert_choice="1"
-        fi
-
-        if [ "$cert_choice" = "2" ]; then
-            USER_LOCAL_TLS="true"
-            prompt_input "证书文件路径" "" "USER_CERT_FILE"
-            prompt_input "私钥文件路径" "" "USER_KEY_FILE"
-        else
-            USER_LOCAL_TLS="false"
-            # 域名和邮箱如果用户已通过参数设置则跳过
-            if [ -z "$USER_DOMAIN" ]; then
-                prompt_input "域名（多个用逗号分隔）" "" "USER_DOMAIN"
-            fi
-            if [ -z "$USER_TLS_EMAIL" ]; then
-                prompt_input "SSL 证书邮箱" "" "USER_TLS_EMAIL"
-            fi
-        fi
-    fi
-
-    # 数据库路径（如果用户已通过参数设置则跳过）
-    if [ -z "$USER_DB" ]; then
-        prompt_input "数据库文件路径" "$DEFAULT_DB" "USER_DB"
-    fi
-
-    # 日志级别（如果用户已通过参数设置则跳过）
-    if [ -z "$USER_LOG" ]; then
-        prompt_input "日志级别 (debug/info/warn/error)" "$DEFAULT_LOG" "USER_LOG"
-    fi
-
-    # 证书目录（如果用户已通过参数设置则跳过）
-    if [ "$USER_TLS" = "true" ] && [ "$USER_LOCAL_TLS" = "false" ]; then
-        if [ -z "$USER_CERT_DIR" ]; then
-            prompt_input "SSL 证书目录" "$DEFAULT_CERT_DIR" "USER_CERT_DIR"
-        fi
-    fi
-
-    echo ""
-    log_info "配置完成"
-}
-
 # 创建配置文件
 create_config() {
     log_step "创建配置文件..."
@@ -588,25 +437,15 @@ do_uninstall() {
     echo "================================"
     echo ""
 
-    # 检查是否在管道模式下
-    if [ "$INTERACTIVE" = "false" ] && [ "$FORCE_UNINSTALL" != "true" ]; then
-        log_error "卸载操作需要确认，请使用 -f 参数或交互式运行"
+    # 需要 -f 参数确认
+    if [ "$FORCE_UNINSTALL" != "true" ]; then
+        log_error "卸载操作需要 -f 参数确认"
         echo ""
         echo "用法:"
-        echo "  sudo bash install.sh --uninstall     # 交互式卸载"
-        echo "  sudo bash install.sh --uninstall -f  # 强制卸载（不确认）"
-        echo "  curl -fsSL ... | sudo bash -s -- --uninstall -f"
+        echo "  sudo bash install.sh -u -f           # 强制卸载"
+        echo "  sudo bash install.sh -u -f --remove-config --remove-data  # 完全卸载"
+        echo "  curl -fsSL ... | sudo bash -s -- -u -f"
         exit 1
-    fi
-
-    # 确认卸载
-    if [ "$FORCE_UNINSTALL" != "true" ]; then
-        echo -n "${YELLOW}警告：这将卸载 subserver 及其配置文件。继续？[y/N]: ${NC}"
-        read -r confirm
-        if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-            log_info "取消卸载"
-            exit 0
-        fi
     fi
 
     log_step "停止服务..."
@@ -643,20 +482,8 @@ do_uninstall() {
         log_warn "二进制文件不存在：${INSTALL_DIR}/subserver"
     fi
 
-    # 询问是否删除配置文件
-    if [ "$FORCE_UNINSTALL" != "true" ]; then
-        echo -n "是否删除配置文件？[y/N]: "
-        read -r remove_config
-        if [[ "$remove_config" =~ ^[Yy]$ ]]; then
-            REMOVE_CONFIG="true"
-        else
-            REMOVE_CONFIG="false"
-        fi
-    else
-        REMOVE_CONFIG="$REMOVE_CONFIG_ON_UNINSTALL"
-    fi
-
-    if [ "$REMOVE_CONFIG" = "true" ]; then
+    # 删除配置文件（需要使用 --remove-config 参数）
+    if [ "$REMOVE_CONFIG_ON_UNINSTALL" = "true" ]; then
         log_step "删除配置文件..."
         if [ -f "$CONFIG_FILE" ]; then
             run_cmd rm -f "$CONFIG_FILE" && log_info "配置文件已删除：$CONFIG_FILE"
@@ -665,23 +492,11 @@ do_uninstall() {
             run_cmd rmdir "$CONFIG_DIR" 2>/dev/null && log_info "配置目录已删除：$CONFIG_DIR" || true
         fi
     else
-        log_info "保留配置文件"
+        log_info "保留配置文件（使用 --remove-config 删除）"
     fi
 
-    # 询问是否删除数据文件
-    if [ "$FORCE_UNINSTALL" != "true" ]; then
-        echo -n "是否删除数据库和证书文件？${RED}（警告：这将永久删除数据）${NC} [y/N]: "
-        read -r remove_data
-        if [[ "$remove_data" =~ ^[Yy]$ ]]; then
-            REMOVE_DATA="true"
-        else
-            REMOVE_DATA="false"
-        fi
-    else
-        REMOVE_DATA="$REMOVE_DATA_ON_UNINSTALL"
-    fi
-
-    if [ "$REMOVE_DATA" = "true" ]; then
+    # 删除数据文件（需要使用 --remove-data 参数）
+    if [ "$REMOVE_DATA_ON_UNINSTALL" = "true" ]; then
         log_step "删除数据文件..."
         if [ -d "$DATA_DIR" ]; then
             run_cmd rm -rf "$DATA_DIR" && log_info "数据目录已删除：$DATA_DIR"
@@ -697,7 +512,7 @@ do_uninstall() {
             run_cmd rm -f "./data/subserver.db" && log_info "数据库文件已删除：./data/subserver.db"
         fi
     else
-        log_info "保留数据文件"
+        log_info "保留数据文件（使用 --remove-data 删除）"
     fi
 
     echo ""
@@ -706,12 +521,12 @@ do_uninstall() {
     echo "================================"
     echo ""
 
-    if [ "$REMOVE_CONFIG" = "false" ] || [ "$REMOVE_DATA" = "false" ]; then
+    if [ "$REMOVE_CONFIG_ON_UNINSTALL" = "false" ] || [ "$REMOVE_DATA_ON_UNINSTALL" = "false" ]; then
         echo "以下文件已被保留:"
-        if [ "$REMOVE_CONFIG" = "false" ] && [ -f "$CONFIG_FILE" ]; then
+        if [ "$REMOVE_CONFIG_ON_UNINSTALL" = "false" ] && [ -f "$CONFIG_FILE" ]; then
             echo "  - $CONFIG_FILE"
         fi
-        if [ "$REMOVE_DATA" = "false" ]; then
+        if [ "$REMOVE_DATA_ON_UNINSTALL" = "false" ]; then
             echo "  - $DATA_DIR (数据目录)"
         fi
         echo ""
@@ -801,9 +616,6 @@ main() {
         run_cmd mkdir -p "$DATA_DIR"
         run_cmd mkdir -p "$CONFIG_DIR"
 
-        # 交互式配置
-        interactive_setup
-
         # 创建配置文件
         create_config
 
@@ -831,29 +643,11 @@ main() {
     log_info "安装完成!"
 }
 
-# 解析命令行参数（支持非交互式）
-INTERACTIVE="true"
+# 解析命令行参数
 UNINSTALL="false"
 FORCE_UNINSTALL="false"
-REMOVE_CONFIG="false"
 REMOVE_CONFIG_ON_UNINSTALL="false"
-REMOVE_DATA="false"
 REMOVE_DATA_ON_UNINSTALL="false"
-
-# 检测是否在管道模式下运行（curl | bash）
-PIPE_MODE="false"
-INTERACTIVE="true"
-if [ ! -t 0 ]; then
-    # 标准输入不是终端，说明是在管道模式下
-    PIPE_MODE="true"
-    # 检查是否可以从 /dev/tty 读取（用于管道模式下的交互）
-    if [ -t 1 ] && [ -e /dev/tty ]; then
-        # 输出到终端且 /dev/tty 存在，可以交互
-        INTERACTIVE="true"
-    else
-        INTERACTIVE="false"
-    fi
-fi
 
 # 手动解析所有参数（支持长参数）
 i=1
@@ -877,27 +671,22 @@ while [ $i -le $# ]; do
         -p)
             i=$((i + 1))
             USER_PORT="${!i}"
-            INTERACTIVE="false"
             ;;
         -tls)
             i=$((i + 1))
             USER_TLS="${!i}"
-            INTERACTIVE="false"
             ;;
         -tls-port)
             i=$((i + 1))
             USER_TLS_PORT="${!i}"
-            INTERACTIVE="false"
             ;;
         -local-tls)
             i=$((i + 1))
             USER_LOCAL_TLS="${!i}"
-            INTERACTIVE="false"
             ;;
         -cert-file)
             i=$((i + 1))
             USER_CERT_FILE="${!i}"
-            INTERACTIVE="false"
             if [ -z "$USER_LOCAL_TLS" ]; then
                 USER_LOCAL_TLS="true"
             fi
@@ -905,7 +694,6 @@ while [ $i -le $# ]; do
         -key-file)
             i=$((i + 1))
             USER_KEY_FILE="${!i}"
-            INTERACTIVE="false"
             if [ -z "$USER_LOCAL_TLS" ]; then
                 USER_LOCAL_TLS="true"
             fi
@@ -913,22 +701,18 @@ while [ $i -le $# ]; do
         -d)
             i=$((i + 1))
             USER_DOMAIN="${!i}"
-            INTERACTIVE="false"
             ;;
         -tls-email)
             i=$((i + 1))
             USER_TLS_EMAIL="${!i}"
-            INTERACTIVE="false"
             ;;
         -db)
             i=$((i + 1))
             USER_DB="${!i}"
-            INTERACTIVE="false"
             ;;
         -log)
             i=$((i + 1))
             USER_LOG="${!i}"
-            INTERACTIVE="false"
             ;;
         -cert-dir)
             i=$((i + 1))
@@ -957,18 +741,16 @@ while [ $i -le $# ]; do
             echo "  --remove-config  卸载时删除配置文件"
             echo "  --remove-data    卸载时删除数据文件（数据库、证书）"
             echo ""
-            echo "其他:"
-            echo "  -h               显示帮助"
-            echo ""
             echo "示例:"
-            echo "  安装:"
+            echo "  一键安装（默认配置）:"
+            echo "    curl -fsSL https://github.com/ayakolin/subserver/releases/latest/download/install.sh | bash"
+            echo ""
+            echo "  自定义配置:"
             echo "    curl -fsSL ... | bash -s -- -p 8080"
-            echo "    curl -fsSL ... | bash -s -- -p 443 -tls true -d example.com -tls-email admin@example.com"
+            echo "    curl -fsSL ... | bash -s -- -tls true -d example.com -tls-email admin@example.com"
             echo ""
             echo "  卸载:"
-            echo "    sudo bash install.sh -u              # 交互式卸载"
-            echo "    sudo bash install.sh -u -f           # 强制卸载"
-            echo "    sudo bash install.sh -u -f --remove-config --remove-data  # 完全卸载"
+            echo "    sudo bash install.sh -u -f --remove-config --remove-data"
             echo "    curl -fsSL ... | sudo bash -s -- -u -f"
             exit 0
             ;;
