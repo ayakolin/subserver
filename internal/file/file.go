@@ -318,3 +318,8 @@ func getMimeType(filename string) string {
 		return "text/plain"
 	}
 }
+
+// GetMimeType 根据文件扩展名获取 MIME 类型（导出函数）
+func GetMimeType(filename string) string {
+	return getMimeType(filename)
+}

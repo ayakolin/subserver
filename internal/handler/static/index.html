@@ -45,7 +45,11 @@
             border-radius: 16px;
             box-shadow: var(--shadow-lg);
             width: 100%;
-            max-width: 480px;
+            max-width: 600px;
+        }
+
+        .container.wide {
+            max-width: 900px;
         }
 
         h1 {
@@ -62,6 +66,118 @@
             margin-bottom: 32px;
         }
 
+        /* 导航栏 */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .navbar-user span {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* 按钮 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-danger {
+            background: var(--error);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* 表单 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+
+        /* 上传区域 */
         .upload-area {
             border: 2px dashed var(--border);
             border-radius: 12px;
@@ -98,1029 +214,600 @@
             font-size: 14px;
         }
 
-        .upload-text strong {
-            color: var(--primary);
-            font-weight: 500;
-        }
-
-        .file-info {
-            display: none;
-            margin-top: 20px;
-            padding: 16px;
-            background: var(--bg);
-            border-radius: 10px;
-            border: 1px solid var(--border);
-        }
-
-        .file-info.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .file-name {
-            color: var(--text);
-            font-weight: 500;
-            font-size: 14px;
-            word-break: break-word;
-        }
-
-        .file-size {
-            color: var(--text-muted);
-            font-size: 12px;
-            margin-top: 4px;
-        }
-
+        /* 选项 */
         .options {
-            display: none;
             margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .option label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        /* 消息 */
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.success {
+            background: var(--primary-light);
+            color: #065f46;
+            display: block;
+        }
+
+        .message.error {
+            background: var(--error-bg);
+            color: #991b1b;
+            display: block;
+        }
+
+        /* 结果 */
+        .result {
+            margin-top: 24px;
             padding: 20px;
             background: var(--bg);
-            border-radius: 10px;
-            border: 1px solid var(--border);
-        }
-
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 16px;
-        }
-
-        .checkbox-label-text {
-            flex: 1;
-            color: var(--text);
-            font-size: 14px;
-        }
-
-        .checkbox-label-text small {
-            color: var(--text-secondary);
-            font-size: 12px;
-            display: block;
-            margin-top: 2px;
-        }
-
-        .checkbox-label input {
+            border-radius: 12px;
             display: none;
-        }
-
-        .switch-slider {
-            position: relative;
-            width: 48px;
-            height: 26px;
-            background: var(--border);
-            border-radius: 26px;
-            transition: 0.3s;
-            flex-shrink: 0;
-        }
-
-        .switch-slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 3px;
-            bottom: 3px;
-            background: white;
-            border-radius: 50%;
-            transition: 0.3s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .checkbox-label input:checked + .switch-slider {
-            background: var(--primary);
-        }
-
-        .checkbox-label input:checked + .switch-slider:before {
-            transform: translateX(22px);
-        }
-
-        .expire-container {
-            margin-top: 16px;
-            padding-top: 16px;
-        }
-
-        .expire-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
-        .expire-label {
-            color: var(--text-secondary);
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        .never-expire-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            cursor: pointer;
-        }
-
-        .never-expire-label input {
-            width: 16px;
-            height: 16px;
-            accent-color: var(--primary);
-            cursor: pointer;
-        }
-
-        .expire-picker-btn {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 14px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            color: var(--text-secondary);
-            transition: all 0.2s;
-            width: 100%;
-            justify-content: flex-start;
-        }
-
-        .expire-picker-btn:hover:not(.disabled) {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .expire-picker-btn.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .expire-picker-btn .icon {
-            font-size: 16px;
-        }
-
-        .expire-picker-btn .text {
-            flex: 1;
-        }
-
-
-        .expire-presets {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .preset-btn {
-            padding: 6px 12px;
-            font-size: 12px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            transition: all 0.2s;
-            font-weight: 400;
-        }
-
-        .preset-btn:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .preset-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 14px 24px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            margin-top: 24px;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
-        }
-
-        .btn:hover:not(:disabled) {
-            background: var(--primary-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.25);
-        }
-
-        .btn:active:not(:disabled) {
-            transform: translateY(0);
-        }
-
-        .btn:disabled {
-            background: var(--text-muted);
-            cursor: not-allowed;
-            opacity: 0.6;
-            box-shadow: none;
-        }
-
-        .result {
-            display: none;
-            margin-top: 28px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border);
         }
 
         .result.show {
             display: block;
-            animation: fadeIn 0.3s ease;
         }
 
-        .result-label {
-            color: var(--text-secondary);
-            font-size: 12px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 10px;
-        }
-
-        .result-url {
-            background: var(--bg);
-            padding: 14px 16px;
-            border-radius: 10px;
-            word-break: break-all;
-            font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
-            font-size: 13px;
-            color: var(--primary);
-            border: 1px solid var(--border);
-        }
-
-        .result-tip {
+        .result-link {
+            display: flex;
+            gap: 8px;
             margin-top: 12px;
-            padding: 12px;
-            background: var(--primary-light);
-            border-radius: 8px;
-            font-size: 12px;
-            color: var(--primary-hover);
-            line-height: 1.5;
         }
 
-        .result-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 16px;
-        }
-
-        .btn-small {
-            padding: 10px 16px;
-            font-size: 13px;
-        }
-
-        .btn-outline {
-            background: transparent;
+        .result-link input {
+            flex: 1;
+            padding: 10px 14px;
             border: 1px solid var(--border);
-            color: var(--text-secondary);
-            box-shadow: none;
-        }
-
-        .btn-outline:hover {
-            background: var(--bg);
-            border-color: var(--text-secondary);
-        }
-
-        .error {
-            color: var(--error);
-            font-size: 13px;
-            margin-top: 16px;
-            padding: 12px 14px;
-            background: var(--error-bg);
             border-radius: 8px;
+            font-size: 14px;
+            background: var(--card);
+        }
+
+        /* 认证表单 */
+        .auth-form {
+            max-width: 360px;
+            margin: 0 auto;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .auth-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* 分享列表 */
+        .shares-list {
+            margin-top: 24px;
+        }
+
+        .share-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .share-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .share-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .share-name {
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .share-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .share-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 16px;
+        }
+
+        /* 标签页 */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
             display: none;
-            border: 1px solid #fecaca;
         }
 
-        .error.show {
+        .tab-content.active {
             display: block;
-            animation: shake 0.4s ease;
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
+        /* 模态框 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 32px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            color: var(--text);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .modal-close:hover {
+            color: var(--text);
+        }
+
+        /* 工具类 */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-4 {
+            margin-top: 16px;
         }
 
         .loading {
-            display: none;
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 13px;
-            margin-top: 16px;
-            font-weight: 500;
+            opacity: 0.6;
+            pointer-events: none;
         }
 
-        .loading.show {
-            display: block;
-        }
-
-        .loading::before {
-            content: '';
+        .spinner {
             display: inline-block;
-            width: 14px;
-            height: 14px;
+            width: 16px;
+            height: 16px;
             border: 2px solid var(--border);
             border-top-color: var(--primary);
             border-radius: 50%;
-            margin-right: 8px;
-            vertical-align: middle;
             animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
-        /* 日历弹窗 */
-        .calendar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(4px);
-            z-index: 999;
-        }
-
-        .calendar-overlay.show {
-            display: block;
-            animation: fadeIn 0.2s ease;
-        }
-
-        .calendar-popup {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.95);
-            background: var(--card);
-            border-radius: 16px;
-            box-shadow: var(--shadow-lg);
-            z-index: 1000;
-            padding: 24px;
-            min-width: 300px;
-            border: 1px solid var(--border);
-        }
-
-        .calendar-popup.show {
-            display: block;
-            animation: scaleIn 0.2s ease forwards;
-        }
-
-        @keyframes scaleIn {
-            to { transform: translate(-50%, -50%) scale(1); }
-        }
-
-        .calendar-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .calendar-header h3 {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .calendar-header .close-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--text-muted);
-            line-height: 1;
-            padding: 4px;
-        }
-
-        .calendar-header .close-btn:hover {
-            color: var(--text);
-        }
-
-        .calendar-nav {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .calendar-nav button {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            color: var(--text);
-            transition: all 0.2s;
-        }
-
-        .calendar-nav button:hover {
-            background: var(--border);
-        }
-
-        .calendar-nav span {
-            flex: 1;
-            text-align: center;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-        }
-
-        .calendar-grid .weekday {
-            text-align: center;
-            font-size: 11px;
-            color: var(--text-muted);
-            padding: 10px 0;
-            font-weight: 500;
-            text-transform: uppercase;
-        }
-
-        .calendar-grid .day {
-            text-align: center;
-            padding: 10px 0;
-            font-size: 13px;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.2s;
-            color: var(--text);
-        }
-
-        .calendar-grid .day:hover {
-            background: var(--primary-light);
-            color: var(--primary-hover);
-        }
-
-        .calendar-grid .day.selected {
-            background: var(--primary);
-            color: white;
-        }
-
-        .calendar-grid .day.today {
-            border: 2px solid var(--primary);
-        }
-
-        .calendar-grid .day.empty {
-            cursor: default;
-        }
-
-        .calendar-time {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border);
-        }
-
-        .calendar-time-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 10px;
-        }
-
-        .calendar-time-inputs {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .calendar-time-inputs input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 14px;
-            text-align: center;
-            font-weight: 500;
-            color: var(--text);
-        }
-
-        .calendar-time-inputs input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-light);
-        }
-
-        .calendar-time-inputs span {
-            color: var(--text-muted);
-            font-weight: 300;
-        }
-
-        .calendar-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .calendar-actions button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .calendar-actions .cancel-btn {
-            background: var(--bg);
-            color: var(--text-secondary);
-        }
-
-        .calendar-actions .cancel-btn:hover {
-            background: var(--border);
-            color: var(--text);
-        }
-
-        .calendar-actions .confirm-btn {
-            background: var(--primary);
-            color: white;
-        }
-
-        .calendar-actions .confirm-btn:hover {
-            background: var(--primary-hover);
-        }
-
-        /* 模式切换标签 */
-        .mode-tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            background: var(--bg);
-            padding: 4px;
-            border-radius: 10px;
-        }
-
-        .mode-tab {
-            flex: 1;
-            padding: 10px 16px;
-            background: transparent;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .mode-tab:hover {
-            color: var(--text);
-        }
-
-        .mode-tab.active {
-            background: var(--card);
-            color: var(--primary);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        /* 文本输入框 */
-        .text-input-container {
-            display: none;
-            margin-bottom: 20px;
-        }
-
-        .text-input-container.show {
-            display: block;
-        }
-
-        .text-input {
-            width: 100%;
-            min-height: 200px;
-            padding: 14px 16px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
-            font-size: 13px;
-            line-height: 1.6;
-            color: var(--text);
-            background: var(--card);
-            resize: vertical;
-            transition: all 0.2s;
-        }
-
-        .text-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-light);
-        }
-
-        .text-input::placeholder {
-            color: var(--text-muted);
-        }
-
-        .input-hint {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>文本文件分享</h1>
-        <p class="subtitle">上传配置文件或输入文本，获取纯文本分享链接（最大 1MB）</p>
+    <!-- 未登录状态 -->
+    <div id="authContainer" class="container">
+        <div class="auth-form">
+            <h1 class="text-center">欢迎使用</h1>
+            <p class="subtitle text-center">文本文件分享服务</p>
 
-        <div class="mode-tabs">
-            <button type="button" class="mode-tab active" data-mode="upload">上传文件</button>
-            <button type="button" class="mode-tab" data-mode="input">输入文本</button>
+            <div class="auth-tabs">
+                <div class="auth-tab active" data-tab="login">登录</div>
+                <div class="auth-tab" data-tab="register">注册</div>
+            </div>
+
+            <div id="message" class="message"></div>
+
+            <!-- 登录表单 -->
+            <form id="loginForm" class="auth-form-content">
+                <div class="form-group">
+                    <label for="loginUsername">用户名</label>
+                    <input type="text" id="loginUsername" required minlength="3" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">密码</label>
+                    <input type="password" id="loginPassword" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%">登录</button>
+            </form>
+
+            <!-- 注册表单 -->
+            <form id="registerForm" class="auth-form-content hidden">
+                <div class="form-group">
+                    <label for="registerUsername">用户名</label>
+                    <input type="text" id="registerUsername" required minlength="3" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">密码</label>
+                    <input type="password" id="registerPassword" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%">注册</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 已登录状态 -->
+    <div id="mainContainer" class="container wide hidden">
+        <div class="navbar">
+            <div class="navbar-brand">文本文件分享</div>
+            <div class="navbar-user">
+                <span id="welcomeUser"></span>
+                <button id="logoutBtn" class="btn btn-secondary btn-sm">登出</button>
+            </div>
         </div>
 
-        <form id="uploadForm">
+        <div class="tabs">
+            <button class="tab active" data-tab="upload">上传文件</button>
+            <button class="tab" data-tab="text">文本输入</button>
+            <button class="tab" data-tab="shares">我的分享</button>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <!-- 上传文件 -->
+        <div id="uploadTab" class="tab-content active">
             <div class="upload-area" id="uploadArea">
-                <input type="file" id="fileInput" accept=".yaml,.yml,.json,.txt,.toml,.xml,.ini,.properties,.env,.conf,.cfg,.config,.rc,.csv,.tsv,.sh,.bash,.zsh,makefile,gnumakefile,dockerfile,.dockerfile,procfile,gemfile,rakefile">
-                <div class="upload-icon">📄</div>
-                <p class="upload-text">
-                    <strong>点击选择文件</strong> 或拖拽到此处
-                </p>
-            </div>
-
-            <div class="text-input-container" id="textInputContainer">
-                <textarea class="text-input" id="textInput" placeholder="在此输入或粘贴文本内容..."></textarea>
-                <div class="input-hint">
-                    <span>ℹ️</span>
-                    <span>支持纯文本格式，最大 1MB</span>
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">
+                    <strong>点击上传</strong> 或将文件拖拽到这里
                 </div>
+                <input type="file" id="fileInput" accept=".yaml,.yml,.json,.txt,.toml,.xml,.ini,.env,.properties,.conf,.cfg,.config,.rc,.csv,.tsv,.sh,.bash,.zsh,Makefile,Dockerfile,Procfile,Gemfile,Rakefile">
             </div>
 
-            <div class="file-info" id="fileInfo">
-                <div class="file-name" id="fileName"></div>
-                <div class="file-size" id="fileSize"></div>
-            </div>
-
-            <div class="options" id="options" style="display: none;">
-                <label class="checkbox-label">
-                    <span class="checkbox-label-text">
-                        阅后即焚
-                        <small>文件访问一次后自动删除</small>
-                    </span>
+            <div class="options">
+                <div class="option">
                     <input type="checkbox" id="onceCheckbox">
-                    <span class="switch-slider"></span>
-                </label>
-                <div class="expire-container">
-                    <div class="expire-header">
-                        <span class="expire-label">过期时间</span>
-                        <label class="never-expire-label">
-                            <input type="checkbox" id="neverExpireCheckbox" checked>
-                            永不过期
-                        </label>
-                    </div>
-                    <button type="button" class="expire-picker-btn disabled" id="expirePickerBtn">
-                        <span class="icon">📅</span>
-                        <span class="text">选择日期</span>
-                    </button>
-                    <div class="expire-presets">
-                        <button type="button" class="preset-btn" data-seconds="60">1 分钟</button>
-                        <button type="button" class="preset-btn" data-seconds="300">5 分钟</button>
-                        <button type="button" class="preset-btn" data-seconds="600">10 分钟</button>
-                        <button type="button" class="preset-btn" data-seconds="1800">30 分钟</button>
-                        <button type="button" class="preset-btn" data-seconds="3600">1 小时</button>
-                        <button type="button" class="preset-btn" data-seconds="86400">1 天</button>
-                        <button type="button" class="preset-btn" data-seconds="604800">7 天</button>
-                    </div>
+                    <label for="onceCheckbox">阅后即焚（读取一次后自动删除）</label>
+                </div>
+                <div class="option">
+                    <input type="checkbox" id="expireCheckbox">
+                    <label for="expireCheckbox">设置过期时间：</label>
+                    <select id="expireSelect" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border);">
+                        <option value="3600">1 小时</option>
+                        <option value="86400" selected>24 小时</option>
+                        <option value="604800">7 天</option>
+                    </select>
                 </div>
             </div>
 
-            <p class="error" id="error"></p>
+            <div id="uploadResult" class="result">
+                <p><strong>上传成功！</strong></p>
+                <div class="result-link">
+                    <input type="text" id="shareLink" readonly>
+                    <button class="btn btn-primary btn-sm" id="copyLinkBtn">复制</button>
+                    <button class="btn btn-secondary btn-sm" id="openLinkBtn">打开</button>
+                </div>
+            </div>
+        </div>
 
-            <button type="submit" class="btn" id="uploadBtn" disabled>上传</button>
+        <!-- 文本输入 -->
+        <div id="textTab" class="tab-content">
+            <div class="form-group">
+                <label for="textContent">输入文本内容</label>
+                <textarea id="textContent" placeholder="在这里输入要分享的文本内容..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="textFilename">文件名（可选）</label>
+                <input type="text" id="textFilename" placeholder="例如：config.yaml">
+            </div>
 
-            <p class="loading" id="loading">上传中</p>
-        </form>
+            <div class="options">
+                <div class="option">
+                    <input type="checkbox" id="textOnceCheckbox">
+                    <label for="textOnceCheckbox">阅后即焚</label>
+                </div>
+                <div class="option">
+                    <input type="checkbox" id="textExpireCheckbox">
+                    <label for="textExpireCheckbox">设置过期时间：</label>
+                    <select id="textExpireSelect" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border);">
+                        <option value="3600">1 小时</option>
+                        <option value="86400" selected>24 小时</option>
+                        <option value="604800">7 天</option>
+                    </select>
+                </div>
+            </div>
 
-        <div class="result" id="result">
-            <div class="result-label">分享链接</div>
-            <div class="result-url" id="resultUrl"></div>
-            <div id="onceTip" class="result-tip" style="display: none;"></div>
-            <div class="result-actions">
-                <button class="btn btn-small btn-outline" id="copyBtn">复制链接</button>
-                <button class="btn btn-small" id="openBtn">打开链接</button>
+            <button class="btn btn-primary" id="submitTextBtn" style="margin-top: 16px;">创建分享</button>
+
+            <div id="textResult" class="result">
+                <p><strong>创建成功！</strong></p>
+                <div class="result-link">
+                    <input type="text" id="textShareLink" readonly>
+                    <button class="btn btn-primary btn-sm" id="copyTextLinkBtn">复制</button>
+                    <button class="btn btn-secondary btn-sm" id="openTextLinkBtn">打开</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 我的分享 -->
+        <div id="sharesTab" class="tab-content">
+            <div id="sharesList" class="shares-list">
+                <p class="text-center" style="color: var(--text-muted);">加载中...</p>
             </div>
         </div>
     </div>
 
-    <!-- 日历弹窗 -->
-    <div class="calendar-overlay" id="calendarOverlay"></div>
-    <div class="calendar-popup" id="calendarPopup">
-        <div class="calendar-header">
-            <h3>选择过期时间</h3>
-            <button class="close-btn" id="calendarCloseBtn">&times;</button>
-        </div>
-        <div class="calendar-nav">
-            <button id="prevMonth">&lt;</button>
-            <span id="currentMonthDisplay"></span>
-            <button id="nextMonth">&gt;</button>
-        </div>
-        <div class="calendar-grid" id="calendarGrid">
-            <div class="weekday">日</div>
-            <div class="weekday">一</div>
-            <div class="weekday">二</div>
-            <div class="weekday">三</div>
-            <div class="weekday">四</div>
-            <div class="weekday">五</div>
-            <div class="weekday">六</div>
-        </div>
-        <div class="calendar-time">
-            <div class="calendar-time-label">时间</div>
-            <div class="calendar-time-inputs">
-                <input type="number" id="calHour" min="0" max="23" placeholder="时" value="12">
-                <span>:</span>
-                <input type="number" id="calMinute" min="0" max="59" placeholder="分" value="00">
-                <span>:</span>
-                <input type="number" id="calSecond" min="0" max="59" placeholder="秒" value="00">
+    <!-- 编辑分享模态框 -->
+    <div id="editModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>编辑分享内容</h2>
+                <button class="modal-close" id="closeModal">&times;</button>
             </div>
-        </div>
-        <div class="calendar-actions">
-            <button class="cancel-btn" id="calendarCancelBtn">取消</button>
-            <button class="confirm-btn" id="calendarConfirmBtn">确定</button>
+            <div id="editMessage" class="message"></div>
+            <form id="editForm">
+                <input type="hidden" id="editFileId">
+                <div class="form-group">
+                    <label>上传新文件</label>
+                    <div class="upload-area" id="editUploadArea" style="padding: 24px;">
+                        <div class="upload-text">
+                            <strong>点击上传</strong> 新文件
+                        </div>
+                        <input type="file" id="editFileInput">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>或输入新内容</label>
+                    <textarea id="editContent" placeholder="输入新的文本内容..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%">保存更改</button>
+            </form>
         </div>
     </div>
 
     <script>
+        // 状态管理
+        let authToken = localStorage.getItem('auth_token');
+        let currentUser = null;
+
+        // DOM 元素
+        const authContainer = document.getElementById('authContainer');
+        const mainContainer = document.getElementById('mainContainer');
+        const messageEl = document.getElementById('message');
+        const welcomeUserEl = document.getElementById('welcomeUser');
+
+        // 初始化
+        function init() {
+            if (authToken) {
+                checkAuth();
+            } else {
+                showAuth();
+            }
+        }
+
+        // 检查认证状态
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/user', {
+                    headers: { 'Authorization': 'Bearer ' + authToken }
+                });
+                if (res.ok) {
+                    currentUser = await res.json();
+                    showMain();
+                } else {
+                    logout();
+                }
+            } catch (e) {
+                showAuth();
+            }
+        }
+
+        // 显示认证界面
+        function showAuth() {
+            authContainer.classList.remove('hidden');
+            mainContainer.classList.add('hidden');
+        }
+
+        // 显示主界面
+        function showMain() {
+            authContainer.classList.add('hidden');
+            mainContainer.classList.remove('hidden');
+            if (currentUser) {
+                welcomeUserEl.textContent = '欢迎，' + currentUser.username;
+            }
+            loadShares();
+        }
+
+        // 显示消息
+        function showMessage(msg, type) {
+            messageEl.textContent = msg;
+            messageEl.className = 'message ' + type;
+            setTimeout(() => {
+                messageEl.className = 'message';
+            }, 5000);
+        }
+
+        // 登录
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    authToken = data.token;
+                    localStorage.setItem('auth_token', authToken);
+                    currentUser = data.user;
+                    showMessage('登录成功！', 'success');
+                    setTimeout(showMain, 500);
+                } else {
+                    showMessage(data.error || '登录失败', 'error');
+                }
+            } catch (e) {
+                showMessage('网络错误', 'error');
+            }
+        });
+
+        // 注册
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    authToken = data.token;
+                    localStorage.setItem('auth_token', authToken);
+                    currentUser = data.user;
+                    showMessage('注册成功！', 'success');
+                    setTimeout(showMain, 500);
+                } else {
+                    showMessage(data.error || '注册失败', 'error');
+                }
+            } catch (e) {
+                showMessage('网络错误', 'error');
+            }
+        });
+
+        // 登出
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await fetch('/api/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + authToken }
+                });
+            } catch (e) {}
+            localStorage.removeItem('auth_token');
+            authToken = null;
+            currentUser = null;
+            showAuth();
+        });
+
+        // 切换认证标签
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const tabName = tab.dataset.tab;
+                document.getElementById('loginForm').classList.toggle('hidden', tabName !== 'login');
+                document.getElementById('registerForm').classList.toggle('hidden', tabName !== 'register');
+            });
+        });
+
+        // 切换主标签
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(tab.dataset.tab + 'Tab').classList.add('active');
+            });
+        });
+
+        // 文件上传
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
-        const fileInfo = document.getElementById('fileInfo');
-        const fileName = document.getElementById('fileName');
-        const fileSize = document.getElementById('fileSize');
-        const options = document.getElementById('options');
-        const onceCheckbox = document.getElementById('onceCheckbox');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const uploadForm = document.getElementById('uploadForm');
-        const error = document.getElementById('error');
-        const loading = document.getElementById('loading');
-        const result = document.getElementById('result');
-        const resultUrl = document.getElementById('resultUrl');
-        const onceTip = document.getElementById('onceTip');
-        const copyBtn = document.getElementById('copyBtn');
-        const openBtn = document.getElementById('openBtn');
-
-        const expirePickerBtn = document.getElementById('expirePickerBtn');
-        const neverExpireCheckbox = document.getElementById('neverExpireCheckbox');
-        const presetBtns = document.querySelectorAll('.preset-btn');
-
-        const calendarPopup = document.getElementById('calendarPopup');
-        const calendarOverlay = document.getElementById('calendarOverlay');
-        const calendarCloseBtn = document.getElementById('calendarCloseBtn');
-        const calendarCancelBtn = document.getElementById('calendarCancelBtn');
-        const calendarConfirmBtn = document.getElementById('calendarConfirmBtn');
-        const prevMonthBtn = document.getElementById('prevMonth');
-        const nextMonthBtn = document.getElementById('nextMonth');
-        const currentMonthDisplay = document.getElementById('currentMonthDisplay');
-        const calendarGrid = document.getElementById('calendarGrid');
-        const calHour = document.getElementById('calHour');
-        const calMinute = document.getElementById('calMinute');
-        const calSecond = document.getElementById('calSecond');
-
-        // 文本输入相关
-        const modeTabs = document.querySelectorAll('.mode-tab');
-        const textInputContainer = document.getElementById('textInputContainer');
-        const textInput = document.getElementById('textInput');
-
-        let selectedFile = null;
-        let selectedExpireDate = null;
-        let currentCalendarDate = new Date();
-        let selectedCalendarDate = null;
-        let currentMode = 'upload';
-
-        // 模式切换
-        modeTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                modeTabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                currentMode = tab.dataset.mode;
-
-                if (currentMode === 'input') {
-                    uploadArea.style.display = 'none';
-                    textInputContainer.classList.add('show');
-                    // 切换时清除文件选择
-                    selectedFile = null;
-                    fileInput.value = '';
-                    fileInfo.classList.remove('show');
-                    // 如果有文本，启用上传按钮
-                    checkInput();
-                } else {
-                    uploadArea.style.display = 'block';
-                    textInputContainer.classList.remove('show');
-                    textInput.value = '';
-                    // 如果有文件，启用上传按钮
-                    if (selectedFile) {
-                        uploadBtn.disabled = false;
-                    } else {
-                        uploadBtn.disabled = true;
-                    }
-                }
-            });
-        });
-
-        // 检查文本输入
-        function checkInput() {
-            const hasContent = textInput.value.trim() !== '';
-            uploadBtn.disabled = !hasContent;
-        }
-
-        textInput.addEventListener('input', checkInput);
-
-        neverExpireCheckbox.addEventListener('change', () => {
-            if (neverExpireCheckbox.checked) {
-                expirePickerBtn.classList.add('disabled');
-                expirePickerBtn.querySelector('.text').textContent = '永不过期';
-                selectedExpireDate = null;
-                presetBtns.forEach(btn => btn.classList.remove('active'));
-            } else {
-                expirePickerBtn.classList.remove('disabled');
-                expirePickerBtn.querySelector('.text').textContent = selectedExpireDate ?
-                    formatDate(selectedExpireDate) : '选择日期';
-            }
-        });
-
-        presetBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const seconds = parseInt(btn.dataset.seconds);
-                neverExpireCheckbox.checked = false;
-                expirePickerBtn.classList.remove('disabled');
-
-                const now = new Date();
-                selectedExpireDate = new Date(now.getTime() + seconds * 1000);
-                selectedCalendarDate = new Date(selectedExpireDate);
-
-                presetBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                expirePickerBtn.querySelector('.text').textContent = formatDate(selectedExpireDate);
-            });
-        });
-
-        function formatDate(date) {
-            const month = date.getMonth() + 1;
-            const day = date.getDate();
-            const hour = date.getHours();
-            const minute = date.getMinutes();
-            return `${month}月${day}日 ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        }
-
-        expirePickerBtn.addEventListener('click', () => {
-            if (expirePickerBtn.classList.contains('disabled')) return;
-
-            if (selectedCalendarDate) {
-                currentCalendarDate = new Date(selectedCalendarDate);
-                calHour.value = selectedCalendarDate.getHours().toString().padStart(2, '0');
-                calMinute.value = selectedCalendarDate.getMinutes().toString().padStart(2, '0');
-                calSecond.value = selectedCalendarDate.getSeconds().toString().padStart(2, '0');
-            } else {
-                const now = new Date();
-                currentCalendarDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-                calHour.value = '23';
-                calMinute.value = '59';
-                calSecond.value = '59';
-            }
-
-            renderCalendar();
-            calendarPopup.classList.add('show');
-            calendarOverlay.classList.add('show');
-        });
-
-        function closeCalendar() {
-            calendarPopup.classList.remove('show');
-            calendarOverlay.classList.remove('show');
-        }
-
-        calendarCloseBtn.addEventListener('click', closeCalendar);
-        calendarOverlay.addEventListener('click', closeCalendar);
-        calendarCancelBtn.addEventListener('click', closeCalendar);
-
-        calendarConfirmBtn.addEventListener('click', () => {
-            if (!selectedCalendarDate) {
-                selectedCalendarDate = new Date(currentCalendarDate);
-            }
-
-            const hour = parseInt(calHour.value) || 0;
-            const minute = parseInt(calMinute.value) || 0;
-            const second = parseInt(calSecond.value) || 0;
-
-            selectedExpireDate = new Date(
-                selectedCalendarDate.getFullYear(),
-                selectedCalendarDate.getMonth(),
-                selectedCalendarDate.getDate(),
-                hour,
-                minute,
-                second
-            );
-
-            neverExpireCheckbox.checked = false;
-            expirePickerBtn.classList.remove('disabled');
-            expirePickerBtn.querySelector('.text').textContent = formatDate(selectedExpireDate);
-            presetBtns.forEach(btn => btn.classList.remove('active'));
-
-            closeCalendar();
-        });
-
-        function renderCalendar() {
-            const year = currentCalendarDate.getFullYear();
-            const month = currentCalendarDate.getMonth();
-
-            currentMonthDisplay.textContent = `${year}年${month + 1}月`;
-
-            calendarGrid.querySelectorAll('.day, .empty').forEach(el => el.remove());
-
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const startDayOfWeek = firstDay.getDay();
-            const totalDays = lastDay.getDate();
-
-            for (let i = 0; i < startDayOfWeek; i++) {
-                const empty = document.createElement('div');
-                empty.className = 'day empty';
-                calendarGrid.appendChild(empty);
-            }
-
-            const today = new Date();
-            const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
-
-            for (let day = 1; day <= totalDays; day++) {
-                const dayEl = document.createElement('div');
-                dayEl.className = 'day';
-                dayEl.textContent = day;
-
-                const thisDate = new Date(year, month, day);
-
-                if (isCurrentMonth && day === today.getDate()) {
-                    dayEl.classList.add('today');
-                }
-
-                if (selectedCalendarDate &&
-                    selectedCalendarDate.getFullYear() === year &&
-                    selectedCalendarDate.getMonth() === month &&
-                    selectedCalendarDate.getDate() === day) {
-                    dayEl.classList.add('selected');
-                }
-
-                dayEl.addEventListener('click', () => {
-                    document.querySelectorAll('.calendar-grid .day.selected').forEach(el => el.classList.remove('selected'));
-                    dayEl.classList.add('selected');
-                    selectedCalendarDate = thisDate;
-                });
-
-                calendarGrid.appendChild(dayEl);
-            }
-        }
-
-        prevMonthBtn.addEventListener('click', () => {
-            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
-            renderCalendar();
-        });
-
-        nextMonthBtn.addEventListener('click', () => {
-            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
-            renderCalendar();
-        });
-
-        function getExpireSeconds() {
-            if (neverExpireCheckbox.checked || !selectedExpireDate) {
-                return 0;
-            }
-
-            const now = new Date();
-            const diff = selectedExpireDate - now;
-            return diff > 0 ? Math.floor(diff / 1000) : 0;
-        }
 
         uploadArea.addEventListener('click', () => fileInput.click());
 
@@ -1136,164 +823,294 @@
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
-            }
+            const file = e.dataTransfer.files[0];
+            if (file) uploadFile(file);
         });
 
         fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
-            }
+            const file = e.target.files[0];
+            if (file) uploadFile(file);
         });
 
-        function handleFile(file) {
-            error.classList.remove('show');
-            result.classList.remove('show');
-
-            const allowedExts = [
-                '.yaml', '.yml', '.json', '.txt', '.toml', '.xml', '.ini',
-                '.properties', '.env', '.conf', '.cfg', '.config', '.rc',
-                '.csv', '.tsv', '.sh', '.bash', '.zsh',
-                'makefile', 'gnumakefile', 'dockerfile', '.dockerfile',
-                'procfile', 'gemfile', 'rakefile'
-            ];
-            const filename = file.name.toLowerCase();
-            const ext = '.' + filename.split('.').pop().toLowerCase();
-            const isAllowed = allowedExts.includes(ext) || allowedExts.includes(filename);
-
-            if (!isAllowed) {
-                showError('只能上传常见的配置文件格式 (yaml, json, txt, toml 等)');
-                return;
-            }
-
-            if (file.size > 1024 * 1024) {
-                showError('文件大小不能超过 1MB');
-                return;
-            }
-
-            selectedFile = file;
-            fileName.textContent = file.name;
-            fileSize.textContent = formatSize(file.size);
-            fileInfo.classList.add('show');
-            options.style.display = 'block';
-            uploadBtn.disabled = false;
-
-            // 读取文件内容并显示在文本框中
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                textInput.value = e.target.result;
-            };
-            reader.readAsText(file);
-        }
-
-        function formatSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-        }
-
-        function showError(msg) {
-            error.textContent = msg;
-            error.classList.add('show');
-        }
-
-        uploadForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            uploadBtn.disabled = true;
-            loading.classList.add('show');
-            error.classList.remove('show');
-            result.classList.remove('show');
-
+        // 上传文件
+        async function uploadFile(file) {
             const formData = new FormData();
+            formData.append('file', file);
 
-            if (currentMode === 'input') {
-                // 文本输入模式
-                const content = textInput.value;
-                if (!content.trim()) {
-                    showError('请输入文本内容');
-                    loading.classList.remove('show');
-                    uploadBtn.disabled = false;
-                    return;
-                }
-                const blob = new Blob([content], { type: 'text/plain' });
-                formData.append('file', blob, 'text.txt');
-            } else {
-                // 文件上传模式
-                if (!selectedFile) {
-                    showError('请选择文件');
-                    loading.classList.remove('show');
-                    uploadBtn.disabled = false;
-                    return;
-                }
-                formData.append('file', selectedFile);
+            const once = document.getElementById('onceCheckbox').checked;
+            const expire = document.getElementById('expireCheckbox').checked;
+
+            if (expire) {
+                formData.append('expire_seconds', document.getElementById('expireSelect').value);
             }
-
-            if (onceCheckbox.checked) {
+            if (once) {
                 formData.append('once', 'true');
             }
 
-            const expireSeconds = getExpireSeconds();
-            if (expireSeconds > 0) {
-                formData.append('expire_seconds', expireSeconds.toString());
+            try {
+                uploadArea.classList.add('loading');
+                const res = await fetch('/upload', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + authToken },
+                    body: formData
+                });
+                const data = await res.json();
+                uploadArea.classList.remove('loading');
+
+                if (res.ok) {
+                    document.getElementById('shareLink').value = data.raw_url;
+                    document.getElementById('uploadResult').classList.add('show');
+                    showMessage('上传成功！', 'success');
+                    loadShares(); // 刷新分享列表
+                } else {
+                    showMessage(data.error || '上传失败', 'error');
+                }
+            } catch (e) {
+                uploadArea.classList.remove('loading');
+                showMessage('网络错误', 'error');
+            }
+        }
+
+        // 复制链接
+        document.getElementById('copyLinkBtn').addEventListener('click', () => {
+            const input = document.getElementById('shareLink');
+            input.select();
+            document.execCommand('copy');
+            showMessage('链接已复制', 'success');
+        });
+
+        document.getElementById('openLinkBtn').addEventListener('click', () => {
+            window.open(document.getElementById('shareLink').value, '_blank');
+        });
+
+        // 文本分享
+        document.getElementById('submitTextBtn').addEventListener('click', async () => {
+            const content = document.getElementById('textContent').value;
+            const filename = document.getElementById('textFilename').value || 'text.txt';
+
+            if (!content.trim()) {
+                showMessage('请输入内容', 'error');
+                return;
+            }
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const formData = new FormData();
+            formData.append('file', blob, filename);
+
+            const once = document.getElementById('textOnceCheckbox').checked;
+            const expire = document.getElementById('textExpireCheckbox').checked;
+
+            if (expire) {
+                formData.append('expire_seconds', document.getElementById('textExpireSelect').value);
+            }
+            if (once) {
+                formData.append('once', 'true');
             }
 
             try {
-                const response = await fetch('/upload', {
+                document.getElementById('submitTextBtn').classList.add('loading');
+                const res = await fetch('/upload', {
                     method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + authToken },
                     body: formData
                 });
+                const data = await res.json();
+                document.getElementById('submitTextBtn').classList.remove('loading');
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || '上传失败');
-                }
-
-                resultUrl.textContent = data.raw_url;
-
-                const tips = [];
-                if (data.once) {
-                    tips.push('🔒 阅后即焚，访问一次后自动删除');
-                }
-                if (data.expires_at) {
-                    const expireTime = new Date(data.expires_at * 1000);
-                    tips.push('⏱️ 将于 ' + expireTime.toLocaleString('zh-CN') + ' 过期');
-                }
-                if (neverExpireCheckbox.checked || (!data.once && !data.expires_at)) {
-                    tips.push('♾️ 永不过期');
-                }
-
-                if (tips.length > 0) {
-                    onceTip.innerHTML = tips.join('<br>');
-                    onceTip.style.display = 'block';
+                if (res.ok) {
+                    document.getElementById('textShareLink').value = data.raw_url;
+                    document.getElementById('textResult').classList.add('show');
+                    showMessage('创建成功！', 'success');
+                    loadShares();
                 } else {
-                    onceTip.style.display = 'none';
+                    showMessage(data.error || '创建失败', 'error');
                 }
-
-                result.classList.add('show');
-            } catch (err) {
-                showError(err.message);
-            } finally {
-                loading.classList.remove('show');
-                uploadBtn.disabled = false;
+            } catch (e) {
+                document.getElementById('submitTextBtn').classList.remove('loading');
+                showMessage('网络错误', 'error');
             }
         });
 
-        copyBtn.addEventListener('click', () => {
-            navigator.clipboard.writeText(resultUrl.textContent).then(() => {
-                copyBtn.textContent = '已复制';
-                setTimeout(() => {
-                    copyBtn.textContent = '复制链接';
-                }, 2000);
-            });
+        document.getElementById('copyTextLinkBtn').addEventListener('click', () => {
+            const input = document.getElementById('textShareLink');
+            input.select();
+            document.execCommand('copy');
+            showMessage('链接已复制', 'success');
         });
 
-        openBtn.addEventListener('click', () => {
-            window.open(resultUrl.textContent, '_blank');
+        document.getElementById('openTextLinkBtn').addEventListener('click', () => {
+            window.open(document.getElementById('textShareLink').value, '_blank');
         });
+
+        // 加载分享列表
+        async function loadShares() {
+            const listEl = document.getElementById('sharesList');
+            try {
+                const res = await fetch('/api/user/shares', {
+                    headers: { 'Authorization': 'Bearer ' + authToken }
+                });
+                const data = await res.json();
+
+                if (res.ok && data.shares && data.shares.length > 0) {
+                    listEl.innerHTML = data.shares.map(share => `
+                        <div class="share-item">
+                            <div class="share-info">
+                                <div class="share-name">${escapeHtml(share.file_name) || '未命名文件'}</div>
+                                <div class="share-meta">
+                                    ${formatFileSize(share.file_size)} •
+                                    创建于 ${formatDate(share.created_at)}
+                                </div>
+                            </div>
+                            <div class="share-actions">
+                                <button class="btn btn-secondary btn-sm" onclick="viewShare('${share.file_id}')">查看</button>
+                                <button class="btn btn-primary btn-sm" onclick="editShare('${share.file_id}')">编辑</button>
+                                <button class="btn btn-secondary btn-sm" onclick="copyShareLink('${share.raw_url}')">复制链接</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    listEl.innerHTML = '<p class="text-center" style="color: var(--text-muted); padding: 40px;">暂无分享内容</p>';
+                }
+            } catch (e) {
+                listEl.innerHTML = '<p class="text-center" style="color: var(--error);">加载失败</p>';
+            }
+        }
+
+        // 查看分享
+        function viewShare(fileId) {
+            window.open('/raw/' + fileId, '_blank');
+        }
+
+        // 编辑分享
+        async function editShare(fileId) {
+            document.getElementById('editFileId').value = fileId;
+            document.getElementById('editModal').classList.add('show');
+
+            // 获取当前内容
+            try {
+                const res = await fetch('/api/share/' + fileId, {
+                    headers: { 'Authorization': 'Bearer ' + authToken }
+                });
+                const data = await res.json();
+                if (res.ok && data.content) {
+                    document.getElementById('editContent').value = data.content;
+                }
+            } catch (e) {}
+        }
+
+        // 关闭模态框
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('editModal').classList.remove('show');
+            document.getElementById('editForm').reset();
+        });
+
+        // 编辑上传
+        const editUploadArea = document.getElementById('editUploadArea');
+        const editFileInput = document.getElementById('editFileInput');
+
+        editUploadArea.addEventListener('click', () => editFileInput.click());
+        editFileInput.addEventListener('change', handleEditFile);
+
+        async function handleEditFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            await submitEditFile(file);
+        }
+
+        // 提交编辑
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const content = document.getElementById('editContent').value;
+            if (!content.trim()) return;
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            await submitEditContent(blob);
+        });
+
+        async function submitEditFile(file) {
+            const fileId = document.getElementById('editFileId').value;
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/share/' + fileId + '/update', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + authToken },
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showMessage('更新成功！', 'success');
+                    document.getElementById('editModal').classList.remove('show');
+                    loadShares();
+                } else {
+                    showMessage(data.error || '更新失败', 'error');
+                }
+            } catch (e) {
+                showMessage('网络错误', 'error');
+            }
+        }
+
+        async function submitEditContent(blob) {
+            const fileId = document.getElementById('editFileId').value;
+
+            try {
+                const res = await fetch('/api/share/' + fileId + '/update', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content: await blob.text() })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showMessage('更新成功！', 'success');
+                    document.getElementById('editModal').classList.remove('show');
+                    loadShares();
+                } else {
+                    showMessage(data.error || '更新失败', 'error');
+                }
+            } catch (e) {
+                showMessage('网络错误', 'error');
+            }
+        }
+
+        // 复制链接
+        function copyShareLink(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                showMessage('链接已复制', 'success');
+            });
+        }
+
+        // 工具函数
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // 启动
+        init();
     </script>
 </body>
 </html>

@@ -190,7 +190,7 @@ func initDatabase(dbPath string) (*sql.DB, error) {
 
 // openSQLite 打开 SQLite 数据库（优化连接池）
 func openSQLite(path string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", path)
+	db, err := sql.Open("sqlite", path)
 	if err != nil {
 		return nil, err
 	}
@@ -212,6 +212,21 @@ func openSQLite(path string) (*sql.DB, error) {
 // initSchema 初始化数据库表结构
 func initSchema(db *sql.DB) error {
 	schema := `
+	-- 配置表
+	CREATE TABLE IF NOT EXISTS config (
+		key TEXT PRIMARY KEY,
+		value TEXT NOT NULL
+	);
+
+	-- 用户表
+	CREATE TABLE IF NOT EXISTS users (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		username TEXT UNIQUE NOT NULL,
+		password TEXT NOT NULL,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	-- 文件表
 	CREATE TABLE IF NOT EXISTS files (
 		id TEXT PRIMARY KEY,
 		name TEXT NOT NULL,
@@ -223,8 +238,24 @@ func initSchema(db *sql.DB) error {
 		once BOOLEAN NOT NULL DEFAULT 0,
 		read_count INTEGER NOT NULL DEFAULT 0
 	);
+
+	-- 分享表（关联用户和文件）
+	CREATE TABLE IF NOT EXISTS shares (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		file_id TEXT NOT NULL,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+		FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
+	);
+
+	-- 索引
 	CREATE INDEX IF NOT EXISTS idx_files_id ON files(id);
 	CREATE INDEX IF NOT EXISTS idx_files_expires ON files(expires_at);
+	CREATE INDEX IF NOT EXISTS idx_shares_user_id ON shares(user_id);
+	CREATE INDEX IF NOT EXISTS idx_shares_file_id ON shares(file_id);
+	CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 	`
 
 	_, err := db.Exec(schema)
