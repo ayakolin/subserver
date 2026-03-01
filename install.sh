@@ -814,10 +814,12 @@ if [ ! -t 0 ]; then
     INTERACTIVE="false"
 fi
 
-# 检查是否直接传入了 --uninstall 参数
-# 同时过滤掉长参数，避免 getopts 报错
-FILTERED_ARGS=()
-for arg in "$@"; do
+# 手动解析所有参数（支持长参数）
+i=1
+while [ $i -le $# ]; do
+    arg="${!i}"
+    next_i=$((i + 1))
+
     case "$arg" in
         --uninstall)
             UNINSTALL="true"
@@ -831,77 +833,68 @@ for arg in "$@"; do
         --remove-data)
             REMOVE_DATA_ON_UNINSTALL="true"
             ;;
-        -*)
-            # 跳过所有长参数，避免 getopts 报错
-            ;;
-        *)
-            FILTERED_ARGS+=("$arg")
-            ;;
-    esac
-done
-
-# 使用 getopts 解析短参数
-while getopts "p:tls:tls-port:local-tls:cert-file:key-file:d:tls-email:db:log:cert-dir:huf" opt 2>/dev/null; do
-    case $opt in
-        p)
-            USER_PORT="$OPTARG"
+        -p)
+            i=$((i + 1))
+            USER_PORT="${!i}"
             INTERACTIVE="false"
             ;;
-        tls)
-            USER_TLS="$OPTARG"
+        -tls)
+            i=$((i + 1))
+            USER_TLS="${!i}"
             INTERACTIVE="false"
             ;;
-        tls-port)
-            USER_TLS_PORT="$OPTARG"
+        -tls-port)
+            i=$((i + 1))
+            USER_TLS_PORT="${!i}"
             INTERACTIVE="false"
             ;;
-        local-tls)
-            USER_LOCAL_TLS="$OPTARG"
+        -local-tls)
+            i=$((i + 1))
+            USER_LOCAL_TLS="${!i}"
             INTERACTIVE="false"
             ;;
-        cert-file)
-            USER_CERT_FILE="$OPTARG"
+        -cert-file)
+            i=$((i + 1))
+            USER_CERT_FILE="${!i}"
             INTERACTIVE="false"
-            # 如果提供了 cert-file 但没有明确设置 local-tls，自动启用
             if [ -z "$USER_LOCAL_TLS" ]; then
                 USER_LOCAL_TLS="true"
             fi
             ;;
-        key-file)
-            USER_KEY_FILE="$OPTARG"
+        -key-file)
+            i=$((i + 1))
+            USER_KEY_FILE="${!i}"
             INTERACTIVE="false"
-            # 如果提供了 key-file 但没有明确设置 local-tls，自动启用
             if [ -z "$USER_LOCAL_TLS" ]; then
                 USER_LOCAL_TLS="true"
             fi
             ;;
-        d)
-            USER_DOMAIN="$OPTARG"
+        -d)
+            i=$((i + 1))
+            USER_DOMAIN="${!i}"
             INTERACTIVE="false"
             ;;
-        tls-email)
-            USER_TLS_EMAIL="$OPTARG"
+        -tls-email)
+            i=$((i + 1))
+            USER_TLS_EMAIL="${!i}"
             INTERACTIVE="false"
             ;;
-        db)
-            USER_DB="$OPTARG"
+        -db)
+            i=$((i + 1))
+            USER_DB="${!i}"
             INTERACTIVE="false"
             ;;
-        log)
-            USER_LOG="$OPTARG"
+        -log)
+            i=$((i + 1))
+            USER_LOG="${!i}"
             INTERACTIVE="false"
             ;;
-        cert-dir)
-            USER_CERT_DIR="$OPTARG"
+        -cert-dir)
+            i=$((i + 1))
+            USER_CERT_DIR="${!i}"
             INTERACTIVE="false"
             ;;
-        u)
-            UNINSTALL="true"
-            ;;
-        f)
-            FORCE_UNINSTALL="true"
-            ;;
-        h)
+        -h|--help)
             echo "用法：install.sh [选项]"
             echo ""
             echo "安装选项:"
@@ -938,12 +931,15 @@ while getopts "p:tls:tls-port:local-tls:cert-file:key-file:d:tls-email:db:log:ce
             echo "    curl -fsSL ... | sudo bash -s -- -u -f"
             exit 0
             ;;
-        \?)
-            # 忽略无效选项
+        -u)
+            UNINSTALL="true"
             ;;
         *)
+            log_warn "未知参数：$arg，使用 --help 查看所有可用参数"
             ;;
     esac
+
+    i=$((i + 1))
 done
 
 # 设置默认值（如果未提供）
