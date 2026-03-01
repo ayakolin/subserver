@@ -964,7 +964,8 @@
                             <div class="share-actions">
                                 <button class="btn btn-secondary btn-sm" onclick="viewShare('${share.file_id}')">查看</button>
                                 <button class="btn btn-primary btn-sm" onclick="editShare('${share.file_id}')">编辑</button>
-                                <button class="btn btn-secondary btn-sm" onclick="copyShareLink('${share.raw_url}')">复制链接</button>
+                                <button class="btn btn-secondary btn-sm" onclick="copyShareLink('${share.raw_url}')">复制</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteShare(${share.id}, '${share.file_id}')">删除</button>
                             </div>
                         </div>
                     `).join('');
@@ -1081,6 +1082,29 @@
             navigator.clipboard.writeText(url).then(() => {
                 showMessage('链接已复制', 'success');
             });
+        }
+
+        // 删除分享
+        async function deleteShare(shareId, fileId) {
+            if (!confirm('确定要删除这条分享记录吗？')) {
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/share/' + shareId, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + authToken }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showMessage('删除成功', 'success');
+                    loadShares(); // 刷新分享列表
+                } else {
+                    showMessage(data.error || '删除失败', 'error');
+                }
+            } catch (e) {
+                showMessage('网络错误', 'error');
+            }
         }
 
         // 工具函数
