@@ -36,17 +36,11 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Install Zig for CGO cross-compilation
-        uses: mlugg/setup-zig@v1
-        with:
-          version: 0.13.0
-
       - name: Build binary
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: 1
-          CC: zig cc
+          CGO_ENABLED: 0
         run: |
           binary_name="subserver_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}"
           if [ "${{ matrix.goos }}" = "windows" ]; then

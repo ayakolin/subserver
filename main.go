@@ -19,7 +19,7 @@ import (
 	"subserver/internal/handler"
 	"subserver/internal/server"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 func init() {
