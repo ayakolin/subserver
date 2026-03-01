@@ -25,7 +25,31 @@
 
 ## 快速开始
 
-### 编译和运行
+### 一键安装（推荐）
+
+```bash
+# Linux/macOS 一键安装
+curl -fsSL https://raw.githubusercontent.com/ayakolin/subserver/refs/heads/main/install.sh | bash
+
+# 自定义配置安装
+curl -fsSL https://raw.githubusercontent.com/ayakolin/subserver/refs/heads/main/install.sh | bash -s -- -p 8080
+
+# 启用 HTTPS（自动申请证书）
+curl -fsSL https://raw.githubusercontent.com/ayakolin/subserver/refs/heads/main/install.sh | bash -s -- -tls true -d example.com -tls-email admin@example.com
+
+# 卸载
+curl -fsSL https://raw.githubusercontent.com/ayakolin/subserver/refs/heads/main/install.sh | sudo bash -s -- -u -f
+```
+
+安装脚本会自动：
+- 检测系统架构并下载对应的二进制文件
+- 引导式配置（端口、HTTPS、域名等）
+- 创建 systemd 服务（Linux）
+- 配置开机自启
+
+详细文档请参考 [INSTALL.md](INSTALL.md)
+
+### 手动编译和运行
 
 ```bash
 # 克隆仓库
