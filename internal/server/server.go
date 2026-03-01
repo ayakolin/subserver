@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/http"
 	"runtime"
-	"syscall"
 	"time"
 
 	"github.com/caddyserver/certmagic"
@@ -57,19 +56,6 @@ func (s *Server) Start() error {
 		return s.startHTTPS()
 	}
 	return s.startHTTP()
-}
-
-// createListenConfig 创建优化的监听配置
-func createListenConfig() *net.ListenConfig {
-	return &net.ListenConfig{
-		KeepAlive: 3 * time.Minute,
-		Control: func(network, address string, c syscall.RawConn) error {
-			return c.Control(func(fd uintptr) {
-				// 启用 SO_REUSEADDR
-				syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
-			})
-		},
-	}
 }
 
 // createOptimizedServer 创建优化的 HTTP 服务器
