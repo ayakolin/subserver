@@ -116,6 +116,8 @@ jobs:
           files: |
             *.tar.gz
             *.tar.gz.sha256
+            *.zip
+            *.zip.sha256
           body_path: release_notes.md
           fail_on_unmatched_files: false
         env:
