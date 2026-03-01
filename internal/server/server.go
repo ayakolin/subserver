@@ -43,7 +43,7 @@ func NewServer(cfg *config.Config, router *gin.Engine) *Server {
 
 // Start 启动服务器
 func (s *Server) Start() error {
-	if s.config.TLS.Enabled {
+	if s.config.EnableTLS {
 		return s.startHTTPS()
 	}
 	return s.startHTTP()
@@ -76,7 +76,7 @@ func createHTTPServer(addr string, handler http.Handler, isRedirect bool) *http.
 
 // startHTTP 启动 HTTP 服务器
 func (s *Server) startHTTP() error {
-	port := s.config.Server.HTTPPort
+	port := s.config.HTTPPort
 	addr := ":" + port
 
 	// 创建优化的 HTTP 服务器
@@ -104,7 +104,7 @@ func (s *Server) startHTTPS() error {
 		return fmt.Errorf("证书设置失败：%w", err)
 	}
 
-	domains := s.config.Server.Domains
+	domains := s.config.Domains
 
 	// 获取 TLS 配置
 	tlsConfig, err := cert.GetTLSConfig(domains)
@@ -116,12 +116,12 @@ func (s *Server) startHTTPS() error {
 	tlsConfig = optimizeTLSConfig(tlsConfig)
 
 	// 创建 HTTPS 服务器
-	httpsAddr := ":" + s.config.Server.HTTPSPort
+	httpsAddr := ":" + s.config.HTTPSPort
 	s.httpsServer = createHTTPServer(httpsAddr, s.router, false)
 	s.httpsServer.TLSConfig = tlsConfig
 
 	// HTTP 服务器 - 用于重定向和 ACME challenge
-	httpAddr := ":" + s.config.Server.HTTPPort
+	httpAddr := ":" + s.config.HTTPPort
 	s.httpServer = createHTTPServer(httpAddr, http.HandlerFunc(s.httpRedirectHandler), true)
 
 	// 启动 HTTP 服务器
@@ -142,10 +142,10 @@ func (s *Server) startHTTPS() error {
 	}
 
 	// 记录启动信息
-	log.Printf("HTTPS 服务器启动在 https://localhost:%s", s.config.Server.HTTPSPort)
+	log.Printf("HTTPS 服务器启动在 https://localhost:%s", s.config.HTTPSPort)
 	log.Printf("使用 %d 个 CPU 核心", runtime.NumCPU())
-	for _, domain := range s.config.Server.Domains {
-		log.Printf("  - https://%s:%s", domain, s.config.Server.HTTPSPort)
+	for _, domain := range s.config.Domains {
+		log.Printf("  - https://%s:%s", domain, s.config.HTTPSPort)
 	}
 
 	// 启动 HTTPS 服务器

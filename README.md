@@ -25,54 +25,56 @@ cd subserver
 # 编译
 go build -o subserver .
 
-# 运行
+# 运行（默认端口 8080）
 ./subserver
 ```
 
-## 运行
-
-### 开发模式
+## 命令行参数
 
 ```bash
-go run main.go
+./subserver -h  # 查看帮助
 ```
 
-### 生产模式
+**可用参数：**
+
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| `-p` | HTTP 端口 | `8080` |
+| `-tls` | 启用 HTTPS | `false` |
+| `-tls-port` | HTTPS 端口 | `443` |
+| `-d` | 域名（多个用逗号分隔） | - |
+| `-tls-email` | SSL 证书邮箱 | - |
+| `-db` | 数据库文件路径 | `./data/subserver.db` |
+| `-log` | 日志级别 | `info` |
+| `-cert-dir` | SSL 证书目录 | `./certs` |
+
+**示例：**
 
 ```bash
-go build -o subserver .
+# 简单启动
 ./subserver
-```
 
-服务器默认在 `http://localhost:8080` 启动。
+# 指定端口
+./subserver -p 8888
+
+# 指定域名
+./subserver -p 8080 -d example.com
+
+# 启用 HTTPS
+./subserver -tls -d example.com -tls-email admin@example.com
+
+# 完整配置
+./subserver -p 8080 -tls -d example.com -tls-email admin@example.com -db ./data/db.sqlite3 -log debug
+```
 
 ## 使用方法
 
-1. **上传文件**：点击「上传文件」标签，选择或拖拽配置文件
-2. **输入文本**：点击「输入文本」标签，直接输入或粘贴内容
+1. **上传文件**：点击上传区域，选择或拖拽配置文件
+2. **输入文本**：直接输入或粘贴内容
 3. **设置选项**（可选）：
    - 阅后即焚：访问一次后自动删除
    - 过期时间：选择预设时间或通过日历自定义
 4. **获取链接**：上传成功后复制分享链接
-
-## 配置
-
-编辑 `config.yaml` 配置文件：
-
-```yaml
-server:
-  http_port: 8080      # HTTP 端口
-  https_port: 443      # HTTPS 端口（启用 HTTPS 时）
-  domains:             # 域名列表（用于 SSL 证书申请）
-    - example.com
-
-tls:
-  enabled: false       # 是否启用 HTTPS
-  email: ""            # 联系邮箱（用于 SSL 证书）
-
-log:
-  level: info          # 日志级别：debug, info, warn, error
-```
 
 ## 支持的文件格式
 
@@ -130,10 +132,12 @@ log:
 
 ```
 subserver/
-├── main.go                      # 主程序入口，数据库初始化
+├── main.go                      # 主程序入口，命令行参数解析
 ├── internal/
 │   ├── config/
-│   │   └── config.go            # 配置加载
+│   │   └── config.go            # 配置结构
+│   ├── cert/
+│   │   └── cert.go              # TLS 证书管理
 │   ├── file/
 │   │   └── file.go              # 文件验证、存储逻辑
 │   ├── handler/

@@ -2,11 +2,13 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -23,20 +25,72 @@ func init() {
 }
 
 func main() {
-	// 加载配置文件
-	cfg, err := config.LoadConfig("config.yaml")
-	if err != nil {
-		log.Printf("警告：%v，使用默认配置", err)
+	// 定义命令行参数
+	httpPort := flag.String("p", "8080", "HTTP 端口")
+	httpsPort := flag.String("tls-port", "443", "HTTPS 端口")
+	enableTLS := flag.Bool("tls", false, "启用 HTTPS")
+	domains := flag.String("d", "", "域名（多个域名用逗号分隔）")
+	tlsEmail := flag.String("tls-email", "", "SSL 证书邮箱")
+	dbPath := flag.String("db", "./data/subserver.db", "数据库文件路径")
+	logLevel := flag.String("log", "info", "日志级别 (debug, info, warn, error)")
+	certDir := flag.String("cert-dir", "./certs", "SSL 证书目录")
+	showHelp := flag.Bool("h", false, "显示帮助信息")
+	showVersion := flag.Bool("v", false, "显示版本号")
+
+	flag.Parse()
+
+	// 显示帮助信息
+	if *showHelp {
+		fmt.Println("SubServer - 文本文件分享服务器")
+		fmt.Println("")
+		fmt.Println("用法:")
+		fmt.Println("  subserver [选项]")
+		fmt.Println("")
+		fmt.Println("选项:")
+		fmt.Println("  -p string        HTTP 端口 (默认 \"8080\")")
+		fmt.Println("  -tls             启用 HTTPS")
+		fmt.Println("  -tls-port string HTTPS 端口 (默认 \"443\")")
+		fmt.Println("  -d string        域名（多个域名用逗号分隔）")
+		fmt.Println("  -tls-email string  SSL 证书邮箱")
+		fmt.Println("  -db string       数据库文件路径 (默认 \"./data/subserver.db\")")
+		fmt.Println("  -log string      日志级别 (默认 \"info\")")
+		fmt.Println("  -cert-dir string SSL 证书目录 (默认 \"./certs\")")
+		fmt.Println("  -h               显示帮助信息")
+		fmt.Println("  -v               显示版本号")
+		fmt.Println("")
+		fmt.Println("示例:")
+		fmt.Println("  subserver -p 8080                          # 简单启动")
+		fmt.Println("  subserver -p 8080 -d example.com          # 指定域名")
+		fmt.Println("  subserver -tls -d example.com -tls-email admin@example.com  # 启用 HTTPS")
+		return
+	}
+
+	// 显示版本号
+	if *showVersion {
+		fmt.Println("SubServer v1.0.0")
+		return
+	}
+
+	// 构建配置
+	cfg := &config.Config{
+		HTTPPort:  *httpPort,
+		HTTPSPort: *httpsPort,
+		EnableTLS: *enableTLS,
+		Domains:   parseDomains(*domains),
+		TLSEmail:  *tlsEmail,
+		DBPath:    *dbPath,
+		LogLevel:  *logLevel,
+		CertDir:   *certDir,
 	}
 
 	// 确保数据目录存在
-	if err := ensureDataDir(cfg.Database.SQLitePath); err != nil {
+	if err := ensureDataDir(cfg.DBPath); err != nil {
 		fmt.Printf("无法创建数据目录：%v\n", err)
 		os.Exit(1)
 	}
 
 	// 初始化数据库
-	db, err := initDatabase(cfg.Database)
+	db, err := initDatabase(cfg.DBPath)
 	if err != nil {
 		fmt.Printf("无法初始化数据库：%v\n", err)
 		os.Exit(1)
@@ -44,14 +98,14 @@ func main() {
 	defer db.Close()
 
 	// 设置 Gin 模式
-	if cfg.Log.Level == "debug" {
+	if cfg.LogLevel == "debug" {
 		gin.SetMode(gin.DebugMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	// 创建路由
-	router := newEngine(cfg)
+	router := newEngine()
 
 	// 创建处理器并注册路由
 	h := handler.NewHandler(db)
@@ -65,23 +119,25 @@ func main() {
 	}
 }
 
-// initDatabase 初始化数据库
-func initDatabase(cfg config.DatabaseConfig) (*sql.DB, error) {
-	var db *sql.DB
-	var err error
-
-	switch cfg.Type {
-	case "sqlite":
-		db, err = openSQLite(cfg.SQLitePath)
-	case "mysql":
-		db, err = openMySQL(cfg.MySQL)
-	case "postgres":
-		db, err = openPostgres(cfg.Postgres)
-	default:
-		// 默认使用 SQLite
-		db, err = openSQLite(cfg.SQLitePath)
+// parseDomains 解析域名字符串
+func parseDomains(domainsStr string) []string {
+	if domainsStr == "" {
+		return []string{}
 	}
+	parts := strings.Split(domainsStr, ",")
+	domains := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			domains = append(domains, p)
+		}
+	}
+	return domains
+}
 
+// initDatabase 初始化数据库
+func initDatabase(dbPath string) (*sql.DB, error) {
+	db, err := openSQLite(dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("连接数据库失败：%w", err)
 	}
@@ -108,50 +164,6 @@ func openSQLite(path string) (*sql.DB, error) {
 	db.SetConnMaxLifetime(5 * 60 * time.Second)
 
 	// 测试连接
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
-
-	return db, nil
-}
-
-// openMySQL 打开 MySQL 数据库
-func openMySQL(dsn string) (*sql.DB, error) {
-	if dsn == "" {
-		return nil, fmt.Errorf("MySQL DSN 未配置")
-	}
-
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(5 * 60 * time.Second)
-
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
-
-	return db, nil
-}
-
-// openPostgres 打开 PostgreSQL 数据库
-func openPostgres(dsn string) (*sql.DB, error) {
-	if dsn == "" {
-		return nil, fmt.Errorf("PostgreSQL DSN 未配置")
-	}
-
-	db, err := sql.Open("postgres", dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(5 * 60 * time.Second)
-
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
@@ -188,7 +200,7 @@ func ensureDataDir(dbPath string) error {
 }
 
 // newEngine 创建优化的 Gin 引擎
-func newEngine(cfg *config.Config) *gin.Engine {
+func newEngine() *gin.Engine {
 	engine := gin.New()
 
 	// 使用自定义的 Logger 和 Recovery 中间件
