@@ -320,7 +320,9 @@ prompt_yes_no() {
 # 交互式配置
 interactive_setup() {
     # 管道模式下跳过配置，使用参数或默认值
-    if [ "$INTERACTIVE" = "false" ]; then
+    if [ "$PIPE_MODE" = "true" ]; then
+        log_info "管道模式下跳过交互配置，使用默认值"
+        log_info "如需交互配置，请下载脚本后运行：bash install.sh"
         return
     fi
 
@@ -352,12 +354,8 @@ interactive_setup() {
         echo "  2) 使用本地已有证书文件"
         echo -n "请选择 [1]: "
 
-        if [ "$INTERACTIVE" = "false" ]; then
-            cert_choice="1"
-        else
-            read -r cert_choice
-            [ -z "$cert_choice" ] && cert_choice="1"
-        fi
+        read -r cert_choice
+        [ -z "$cert_choice" ] && cert_choice="1"
 
         if [ "$cert_choice" = "2" ]; then
             USER_LOCAL_TLS="true"
@@ -831,8 +829,10 @@ REMOVE_DATA="false"
 REMOVE_DATA_ON_UNINSTALL="false"
 
 # 检测是否在管道模式下运行（curl | bash）
+PIPE_MODE="false"
 if [ ! -t 0 ]; then
     # 标准输入不是终端，说明是在管道模式下
+    PIPE_MODE="true"
     INTERACTIVE="false"
 fi
 
