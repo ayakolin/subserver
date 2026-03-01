@@ -16,6 +16,9 @@ curl -fsSL https://raw.githubusercontent.com/ayakolin/subserver/main/install.sh 
 
 # 卸载
 curl -fsSL https://raw.githubusercontent.com/ayakolin/subserver/main/install.sh | sudo bash -s -- -u -f
+
+# 更新
+curl -fsSL https://raw.githubusercontent.com/ayakolin/subserver/main/install.sh | sudo bash -s -- --update
 ```
 
 详细文档请参阅 [INSTALL.md](INSTALL.md)

@@ -429,6 +429,91 @@ show_summary() {
     echo ""
 }
 
+# 更新函数
+do_update() {
+    echo ""
+    echo "================================"
+    echo "  subserver 更新程序"
+    echo "================================"
+    echo ""
+
+    log_step "检查当前版本..."
+    if ! command -v subserver &> /dev/null; then
+        log_error "未找到 subserver，请先安装"
+        exit 1
+    fi
+
+    local current_version
+    current_version=$(subserver -v 2>&1 || echo "unknown")
+    log_info "当前版本：$current_version"
+
+    # 获取最新版本
+    local latest_version
+    latest_version=$(get_latest_version)
+    log_info "最新版本：$latest_version"
+
+    # 比较版本（简单字符串比较）
+    if [ "$current_version" = "$latest_version" ] || [ "$current_version" = "unknown" ]; then
+        log_info "已是最新版本，无需更新"
+        exit 0
+    fi
+
+    log_step "发现新版本，开始更新..."
+
+    # 停止服务
+    if has_systemd; then
+        if run_cmd systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then
+            log_step "停止服务..."
+            run_cmd systemctl stop "$SERVICE_NAME"
+            log_info "服务已停止"
+        fi
+    fi
+
+    # 备份当前版本
+    log_step "备份当前版本..."
+    if [ -f "${INSTALL_DIR}/subserver" ]; then
+        run_cmd cp "${INSTALL_DIR}/subserver" "${INSTALL_DIR}/subserver.bak"
+        log_info "备份已创建：${INSTALL_DIR}/subserver.bak"
+    fi
+
+    # 下载并安装新版本
+    local os=$(detect_os)
+    local arch=$(detect_arch)
+    if ! download_binary "$os" "$arch" "$latest_version"; then
+        log_error "下载失败，尝试恢复备份..."
+        if [ -f "${INSTALL_DIR}/subserver.bak" ]; then
+            run_cmd mv "${INSTALL_DIR}/subserver.bak" "${INSTALL_DIR}/subserver"
+            log_info "已恢复旧版本"
+        fi
+        exit 1
+    fi
+
+    # 删除备份
+    if [ -f "${INSTALL_DIR}/subserver.bak" ]; then
+        run_cmd rm -f "${INSTALL_DIR}/subserver.bak"
+    fi
+
+    # 启动服务
+    if has_systemd; then
+        log_step "启动服务..."
+        run_cmd systemctl daemon-reload
+        run_cmd systemctl start "$SERVICE_NAME"
+        sleep 2
+        if run_cmd systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then
+            log_info "服务已启动"
+        else
+            log_warn "服务启动失败，请手动检查"
+        fi
+    fi
+
+    echo ""
+    echo "================================"
+    log_info "更新完成!"
+    echo "================================"
+    echo ""
+    log_info "已更新到版本：$latest_version"
+}
+
 # 卸载函数
 do_uninstall() {
     echo ""
@@ -648,6 +733,7 @@ UNINSTALL="false"
 FORCE_UNINSTALL="false"
 REMOVE_CONFIG_ON_UNINSTALL="false"
 REMOVE_DATA_ON_UNINSTALL="false"
+UPDATE="false"
 
 # 手动解析所有参数（支持长参数）
 i=1
@@ -656,6 +742,9 @@ while [ $i -le $# ]; do
     next_i=$((i + 1))
 
     case "$arg" in
+        --update)
+            UPDATE="true"
+            ;;
         --uninstall)
             UNINSTALL="true"
             ;;
@@ -735,7 +824,8 @@ while [ $i -le $# ]; do
             echo "  -log LEVEL       日志级别 (默认：info)"
             echo "  -cert-dir DIR    SSL 证书目录 (默认：./certs)"
             echo ""
-            echo "卸载选项:"
+            echo "更新/卸载选项:"
+            echo "  --update         更新到最新版本"
             echo "  -u, --uninstall  卸载 subserver"
             echo "  -f, --force      强制卸载（不询问确认）"
             echo "  --remove-config  卸载时删除配置文件"
@@ -748,6 +838,10 @@ while [ $i -le $# ]; do
             echo "  自定义配置:"
             echo "    curl -fsSL ... | bash -s -- -p 8080"
             echo "    curl -fsSL ... | bash -s -- -tls true -d example.com -tls-email admin@example.com"
+            echo ""
+            echo "  更新:"
+            echo "    sudo bash install.sh --update"
+            echo "    curl -fsSL ... | sudo bash -s -- --update"
             echo ""
             echo "  卸载:"
             echo "    sudo bash install.sh -u -f --remove-config --remove-data"
@@ -774,8 +868,10 @@ done
 [ -z "$USER_LOG" ] && USER_LOG="$DEFAULT_LOG"
 [ -z "$USER_CERT_DIR" ] && USER_CERT_DIR="$DEFAULT_CERT_DIR"
 
-# 执行卸载或安装
-if [ "$UNINSTALL" = "true" ]; then
+# 执行更新、卸载或安装
+if [ "$UPDATE" = "true" ]; then
+    do_update
+elif [ "$UNINSTALL" = "true" ]; then
     do_uninstall
 else
     main
