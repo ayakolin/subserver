@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"embed"
 	"net/http"
 	"strconv"
 	"time"
@@ -9,6 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"subserver/internal/file"
 )
+
+//go:embed static/index.html
+var indexHTML embed.FS
 
 const (
 	maxSize = 1 << 20 // 1MB
@@ -119,7 +123,12 @@ func getHost(c *gin.Context) string {
 
 // Index 上传页面
 func (h *Handler) Index(c *gin.Context) {
-	c.File("./index.html")
+	content, err := indexHTML.ReadFile("static/index.html")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "无法加载页面"})
+		return
+	}
+	c.Data(http.StatusOK, "text/html; charset=utf-8", content)
 }
 
 // RegisterRoutes 注册路由

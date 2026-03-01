@@ -15,34 +15,12 @@
 
 ## 快速开始
 
-### 一键安装（推荐）
-
-```bash
-git clone https://github.com/ayakolin/subserver.git
-cd subserver
-sudo ./install.sh
-```
-
-安装脚本会自动：
-- 检测并安装 Go 依赖
-- 编译二进制文件
-- 创建 systemd 服务（开机自启）
-- 引导式配置端口、HTTPS 等选项
-
-### 手动安装
+### 编译和运行
 
 ```bash
 # 克隆仓库
 git clone https://github.com/ayakolin/subserver.git
 cd subserver
-
-# 安装 Go (如未安装)
-# Ubuntu/Debian
-sudo apt install golang-go
-# CentOS/RHEL
-sudo yum install golang
-# Arch
-sudo pacman -S go
 
 # 编译
 go build -o subserver .
@@ -64,21 +42,6 @@ go run main.go
 ```bash
 go build -o subserver .
 ./subserver
-```
-
-### 服务管理（systemd）
-
-```bash
-# 查看状态
-sudo systemctl status subserver
-
-# 启动/停止/重启
-sudo systemctl start subserver
-sudo systemctl stop subserver
-sudo systemctl restart subserver
-
-# 查看日志
-journalctl -u subserver -f
 ```
 
 服务器默认在 `http://localhost:8080` 启动。
@@ -168,26 +131,20 @@ log:
 ```
 subserver/
 ├── main.go                      # 主程序入口，数据库初始化
-├── index.html                   # 前端页面（上传/输入界面）
 ├── internal/
 │   ├── config/
 │   │   └── config.go            # 配置加载
 │   ├── file/
 │   │   └── file.go              # 文件验证、存储逻辑
 │   ├── handler/
-│   │   └── handler.go           # HTTP 处理器
+│   │   ├── handler.go           # HTTP 处理器
+│   │   └── static/
+│   │       └── index.html       # 前端页面（已嵌入到二进制）
 │   └── server/
 │       └── server.go            # 服务器启动
 ├── data/                        # SQLite 数据库目录
-├── install.sh                   # 自动化安装脚本
 ├── go.mod                       # Go 模块配置
 └── README.md                    # 项目文档
-```
-
-## 卸载
-
-```bash
-sudo ./install.sh --uninstall
 ```
 
 ## License
