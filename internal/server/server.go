@@ -135,17 +135,28 @@ func (s *Server) startHTTP() error {
 
 // startHTTPS 启动 HTTPS 服务器
 func (s *Server) startHTTPS() error {
-	// 设置 TLS 证书
-	if err := cert.SetupTLS(s.config); err != nil {
-		return fmt.Errorf("证书设置失败：%w", err)
-	}
+	var tlsConfig *tls.Config
+	var err error
 
-	domains := s.config.Domains
+	if s.config.UseLocalCert {
+		// 使用本地证书文件
+		tlsConfig, err = s.loadLocalCert()
+		if err != nil {
+			return fmt.Errorf("加载本地证书失败：%w", err)
+		}
+	} else {
+		// 使用自动证书（CertMagic）
+		if err := cert.SetupTLS(s.config); err != nil {
+			return fmt.Errorf("证书设置失败：%w", err)
+		}
 
-	// 获取 TLS 配置
-	tlsConfig, err := cert.GetTLSConfig(domains)
-	if err != nil {
-		return fmt.Errorf("TLS 配置失败：%w", err)
+		domains := s.config.Domains
+
+		// 获取 TLS 配置
+		tlsConfig, err = cert.GetTLSConfig(domains)
+		if err != nil {
+			return fmt.Errorf("TLS 配置失败：%w", err)
+		}
 	}
 
 	// 优化 TLS 配置
@@ -178,9 +189,13 @@ func (s *Server) startHTTPS() error {
 
 	// 记录启动信息
 	log.Printf("HTTPS 服务器启动在 https://localhost:%s", s.config.HTTPSPort)
-	log.Printf("使用 %d 个 CPU 核心", runtime.NumCPU())
-	for _, domain := range s.config.Domains {
-		log.Printf("  - https://%s:%s", domain, s.config.HTTPSPort)
+	if s.config.UseLocalCert {
+		log.Printf("使用本地证书：%s", s.config.CertFile)
+	} else {
+		log.Printf("使用 %d 个 CPU 核心", runtime.NumCPU())
+		for _, domain := range s.config.Domains {
+			log.Printf("  - https://%s:%s", domain, s.config.HTTPSPort)
+		}
 	}
 
 	// 启动 HTTPS 服务器
@@ -188,10 +203,41 @@ func (s *Server) startHTTPS() error {
 	return s.httpsSrv.Serve(tlsListener)
 }
 
+// loadLocalCert 加载本地证书文件
+func (s *Server) loadLocalCert() (*tls.Config, error) {
+	certFile := s.config.CertFile
+	keyFile := s.config.KeyFile
+
+	// 如果没有指定证书文件，使用默认路径
+	if certFile == "" {
+		certFile = s.config.CertDir + "/cert.pem"
+	}
+	if keyFile == "" {
+		keyFile = s.config.CertDir + "/key.pem"
+	}
+
+	// 加载证书
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("加载证书对失败：%w", err)
+	}
+
+	// 创建 TLS 配置
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{cert},
+	}
+
+	log.Printf("已加载本地证书：cert=%s, key=%s", certFile, keyFile)
+	return tlsConfig, nil
+}
+
 // optimizeTLSConfig 优化 TLS 配置
 func optimizeTLSConfig(cfg *tls.Config) *tls.Config {
 	// 启用会话票证缓存
 	cfg.SessionTicketsDisabled = false
+
+	// 设置 ALPN 协议（支持 HTTP/2 和 HTTP/1.1）
+	cfg.NextProtos = []string{"h2", "http/1.1"}
 
 	// 设置首选密码套件（按性能排序）
 	cfg.CipherSuites = []uint16{

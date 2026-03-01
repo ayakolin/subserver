@@ -2,14 +2,17 @@ package config
 
 // Config 配置结构
 type Config struct {
-	HTTPPort   string
-	HTTPSPort  string
-	EnableTLS  bool
-	Domains    []string
-	TLSEmail   string
-	DBPath     string
-	LogLevel   string
-	CertDir    string
+	HTTPPort    string
+	HTTPSPort   string
+	EnableTLS   bool
+	UseLocalCert bool // 使用本地证书文件（而非自动证书）
+	CertFile    string // 证书文件路径
+	KeyFile     string // 私钥文件路径
+	Domains     []string
+	TLSEmail    string
+	DBPath      string
+	LogLevel    string
+	CertDir     string
 }
 
 // DefaultConfig 返回默认配置

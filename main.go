@@ -32,6 +32,9 @@ func main() {
 	httpPort := flag.String("p", "8080", "HTTP 端口")
 	httpsPort := flag.String("tls-port", "443", "HTTPS 端口")
 	enableTLS := flag.Bool("tls", false, "启用 HTTPS")
+	localCert := flag.Bool("local-tls", false, "使用本地证书文件（而非自动申请证书）")
+	certFile := flag.String("cert-file", "", "证书文件路径（与 -local-tls 一起使用）")
+	keyFile := flag.String("key-file", "", "私钥文件路径（与 -local-tls 一起使用）")
 	domains := flag.String("d", "", "域名（多个域名用逗号分隔）")
 	tlsEmail := flag.String("tls-email", "", "SSL 证书邮箱")
 	dbPath := flag.String("db", "./data/subserver.db", "数据库文件路径")
@@ -53,6 +56,9 @@ func main() {
 		fmt.Println("  -p string        HTTP 端口 (默认 \"8080\")")
 		fmt.Println("  -tls             启用 HTTPS")
 		fmt.Println("  -tls-port string HTTPS 端口 (默认 \"443\")")
+		fmt.Println("  -local-tls       使用本地证书文件（而非自动申请证书）")
+		fmt.Println("  -cert-file string 证书文件路径（与 -local-tls 一起使用）")
+		fmt.Println("  -key-file string 私钥文件路径（与 -local-tls 一起使用）")
 		fmt.Println("  -d string        域名（多个域名用逗号分隔）")
 		fmt.Println("  -tls-email string  SSL 证书邮箱")
 		fmt.Println("  -db string       数据库文件路径 (默认 \"./data/subserver.db\")")
@@ -64,26 +70,30 @@ func main() {
 		fmt.Println("示例:")
 		fmt.Println("  subserver -p 8080                          # 简单启动")
 		fmt.Println("  subserver -p 8080 -d example.com          # 指定域名")
-		fmt.Println("  subserver -tls -d example.com -tls-email admin@example.com  # 启用 HTTPS")
+		fmt.Println("  subserver -tls -d example.com -tls-email admin@example.com  # 启用 HTTPS (自动证书)")
+		fmt.Println("  subserver -tls -local-tls -cert-dir ./certs  # 使用本地证书")
 		return
 	}
 
 	// 显示版本号
 	if *showVersion {
-		fmt.Println("SubServer v1.0.0")
+		fmt.Println("SubServer v1.0.1")
 		return
 	}
 
 	// 构建配置
 	cfg := &config.Config{
-		HTTPPort:  *httpPort,
-		HTTPSPort: *httpsPort,
-		EnableTLS: *enableTLS,
-		Domains:   parseDomains(*domains),
-		TLSEmail:  *tlsEmail,
-		DBPath:    *dbPath,
-		LogLevel:  *logLevel,
-		CertDir:   *certDir,
+		HTTPPort:     *httpPort,
+		HTTPSPort:    *httpsPort,
+		EnableTLS:    *enableTLS,
+		UseLocalCert: *localCert,
+		CertFile:     *certFile,
+		KeyFile:      *keyFile,
+		Domains:      parseDomains(*domains),
+		TLSEmail:     *tlsEmail,
+		DBPath:       *dbPath,
+		LogLevel:     *logLevel,
+		CertDir:      *certDir,
 	}
 
 	// 确保数据目录存在
