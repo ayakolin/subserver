@@ -23,7 +23,7 @@ const (
 	readHeaderTimeout = 5 * time.Second   // 读取头部超时
 	writeTimeout      = 30 * time.Second  // 写入超时
 	idleTimeout       = 60 * time.Second  // 空闲连接超时
-	maxHeaderBytes    = 1 << 10           // 最大头部大小 1KB
+	maxHeaderBytes    = 1 << 20           // 最大头部大小 1MB
 )
 
 // Server 服务器结构
