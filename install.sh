@@ -208,8 +208,14 @@ download_binary() {
     fi
 
     if [ ! -f "$binary_file" ]; then
-        # 尝试查找解压后的文件
-        binary_file=$(find . -name "subserver*" -type f | head -1 | sed 's|^\./||')
+        # 尝试查找解压后的文件，排除 checksum 文件和压缩包
+        # 优先查找名为 subserver 的可执行文件
+        binary_file=$(find . -name "subserver" -type f | head -1 | sed 's|^\./||')
+
+        # 如果还没找到，查找 subserver 开头的文件（排除 .sha256 和 .tar.gz）
+        if [ -z "$binary_file" ] || [ ! -f "$binary_file" ]; then
+            binary_file=$(find . -type f -name "subserver*" ! -name "*.sha256" ! -name "*.tar.gz" ! -name "*.zip" | head -1 | sed 's|^\./||')
+        fi
     fi
 
     if [ -z "$binary_file" ] || [ ! -f "$binary_file" ]; then
