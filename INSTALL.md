@@ -1,19 +1,19 @@
 # subserver 安装脚本
 
-自动下载、安装和配置 subserver 的 Bash 脚本。支持从 GitHub Release 自动获取对应架构的二进制文件，并进行引导式部署。
+自动下载、安装和配置 subserver 的 Bash 脚本。支持从 GitHub Release 自动获取对应架构的二进制文件并进行部署。
 
 ## 快速安装
 
-### 一键安装（交互式）
+### 一键安装（默认配置）
 
 ```bash
 curl -fsSL https://github.com/ayakolin/subserver/releases/latest/download/install.sh | bash
 ```
 
-### 非交互式安装（带参数）
+### 自定义配置（带参数）
 
 ```bash
-# 简单安装（默认配置）
+# HTTP 端口
 curl -fsSL https://github.com/ayakolin/subserver/releases/latest/download/install.sh | bash -s -- -p 8080
 
 # 启用 HTTPS（自动申请证书）
@@ -81,7 +81,7 @@ curl -fsSL https://github.com/ayakolin/subserver/releases/latest/download/instal
 2. **下载二进制** - 从 GitHub Release 下载最新版本的对应架构二进制文件
 3. **Checksum 验证** - 可选，如果存在 checksum 文件会自动验证
 4. **安装二进制** - 将二进制文件复制到 `/usr/local/bin/subserver`
-5. **配置** - 交互式询问配置参数（或通过命令行参数提供）
+5. **创建配置文件** - 在 `/etc/subserver/config.env` 创建配置文件
 6. **创建服务** - 在 Linux 上创建 systemd 服务文件
 7. **启动服务** - 启用并启动 subserver 服务
 
@@ -115,16 +115,6 @@ sudo journalctl -u subserver -f
 
 ## 卸载
 
-### 交互式卸载
-
-```bash
-# 下载并运行卸载
-sudo bash install.sh -u
-
-# 或者从 GitHub 直接运行
-curl -fsSL https://github.com/ayakolin/subserver/releases/latest/download/install.sh | sudo bash -s -- -u
-```
-
 ### 强制卸载（不询问确认）
 
 ```bash
@@ -145,13 +135,10 @@ sudo bash install.sh -u -f --remove-config --remove-data
 curl -fsSL https://github.com/ayakolin/subserver/releases/latest/download/install.sh | sudo bash -s -- -u -f --remove-config --remove-data
 ```
 
-### 卸载时保留数据
+### 保留配置和数据
 
 ```bash
-# 只删除程序，保留配置文件和数据
-sudo bash install.sh -u
-
-# 删除程序和服务，保留配置文件
+# 只删除程序和服务，保留配置文件和数据
 sudo bash install.sh -u -f
 
 # 删除程序和服务，删除配置文件但保留数据
