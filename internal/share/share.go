@@ -176,6 +176,65 @@ func (m *Manager) GetShareByID(id int64, userID int64) (*Share, error) {
 	return &share, nil
 }
 
+// GetShareByFileID 根据文件 ID 和用户 ID 获取分享
+func (m *Manager) GetShareByFileID(fileID string, userID int64) (*Share, error) {
+	query := `
+	SELECT s.id, s.user_id, s.file_id, s.created_at, s.updated_at,
+	       f.name, f.content, f.size, f.mime_type, f.expires_at, f.once, f.read_count
+	FROM shares s
+	LEFT JOIN files f ON s.file_id = f.id
+	WHERE s.file_id = ? AND s.user_id = ?
+	`
+
+	var share Share
+	var fileName sql.NullString
+	var content sql.NullString
+	var fileSize sql.NullInt64
+	var mimeType sql.NullString
+	var expiresAt sql.NullTime
+	var once bool
+	var readCount sql.NullInt64
+
+	err := m.db.QueryRow(query, fileID, userID).Scan(
+		&share.ID,
+		&share.UserID,
+		&share.FileID,
+		&share.CreatedAt,
+		&share.UpdatedAt,
+		&fileName,
+		&content,
+		&fileSize,
+		&mimeType,
+		&expiresAt,
+		&once,
+		&readCount,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, sql.ErrNoRows
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if fileName.Valid {
+		share.File = &ShareFile{
+			ID:        share.FileID,
+			Name:      fileName.String,
+			Content:   []byte(content.String),
+			Size:      fileSize.Int64,
+			MimeType:  mimeType.String,
+			Once:      once,
+			ReadCount: int(readCount.Int64),
+		}
+		if expiresAt.Valid {
+			share.File.ExpiresAt = &expiresAt.Time
+		}
+	}
+
+	return &share, nil
+}
+
 // UpdateShareContent 更新分享内容
 func (m *Manager) UpdateShareContent(fileID string, name string, content []byte, mimeType string) error {
 	query := `UPDATE files SET name = ?, content = ?, mime_type = ? WHERE id = ?`
@@ -183,12 +242,38 @@ func (m *Manager) UpdateShareContent(fileID string, name string, content []byte,
 	return err
 }
 
-// DeleteShare 删除分享
+// DeleteShare 删除分享及关联文件
 func (m *Manager) DeleteShare(id int64, userID int64) error {
-	// 先删除分享记录
-	query := `DELETE FROM shares WHERE id = ? AND user_id = ?`
-	_, err := m.db.Exec(query, id, userID)
-	return err
+	// 先获取分享关联的文件 ID
+	var fileID string
+	query := `SELECT file_id FROM shares WHERE id = ? AND user_id = ?`
+	err := m.db.QueryRow(query, id, userID).Scan(&fileID)
+	if err != nil {
+		return err
+	}
+
+	// 删除分享记录
+	query = `DELETE FROM shares WHERE id = ? AND user_id = ?`
+	if _, err := m.db.Exec(query, id, userID); err != nil {
+		return err
+	}
+
+	// 检查是否还有其他分享引用同一文件
+	var count int
+	query = `SELECT COUNT(*) FROM shares WHERE file_id = ?`
+	if err := m.db.QueryRow(query, fileID).Scan(&count); err != nil {
+		return err
+	}
+
+	// 如果没有其他分享引用该文件，删除文件
+	if count == 0 {
+		query = `DELETE FROM files WHERE id = ?`
+		if _, err := m.db.Exec(query, fileID); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // DeleteFile 删除文件（级联删除分享）

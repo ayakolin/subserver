@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"embed"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,9 +16,6 @@ import (
 	"subserver/internal/file"
 	"subserver/internal/share"
 )
-
-// 确保 sql 包被正确引用
-var _ = sql.ErrNoRows
 
 //go:embed static/index.html
 var indexHTML embed.FS
@@ -34,8 +32,6 @@ type Handler struct {
 	uploadWg  sync.WaitGroup
 	jobChan   chan file.UploadJob
 	cleaner   *file.Cleaner
-	hostCache string
-	hostMu    sync.RWMutex
 	auth      *auth.Auth
 	shareMgr  *share.Manager
 	tlsEnabled bool
@@ -81,12 +77,14 @@ func getOrCreateJWTSecret(db *sql.DB) string {
 	// 生成新的密钥
 	secret, err = auth.GenerateSecureSecret()
 	if err != nil {
-		secret = "default-secret-change-me"
+		log.Fatalf("无法生成 JWT 密钥：%v", err)
 	}
 
 	// 保存到数据库
 	query = `INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)`
-	db.Exec(query, "jwt_secret", secret)
+	if _, err := db.Exec(query, "jwt_secret", secret); err != nil {
+		log.Printf("警告：JWT 密钥保存到数据库失败：%v", err)
+	}
 
 	return secret
 }
@@ -261,15 +259,8 @@ func (h *Handler) GetRawFile(c *gin.Context) {
 	c.Data(http.StatusOK, "text/plain; charset=utf-8", f.Content)
 }
 
-// getHost 获取当前请求的主机（带缓存）
+// getHost 获取当前请求的主机
 func (h *Handler) getHost(c *gin.Context) string {
-	h.hostMu.RLock()
-	if h.hostCache != "" {
-		h.hostMu.RUnlock()
-		return h.hostCache
-	}
-	h.hostMu.RUnlock()
-
 	host := c.Request.Host
 	if host == "" {
 		host = "localhost:" + h.tlsPort
@@ -277,16 +268,9 @@ func (h *Handler) getHost(c *gin.Context) string {
 
 	// 根据是否启用 HTTPS 选择协议
 	if h.tlsEnabled {
-		host = "https://" + host
-	} else {
-		host = "http://" + host
+		return "https://" + host
 	}
-
-	h.hostMu.Lock()
-	h.hostCache = host
-	h.hostMu.Unlock()
-
-	return host
+	return "http://" + host
 }
 
 // Index 上传页面
@@ -370,12 +354,8 @@ func (h *Handler) Login(c *gin.Context) {
 	}
 
 	user, err := h.auth.Login(req.Username, req.Password)
-	if err == auth.ErrUserNotFound {
-		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
-		return
-	}
-	if err == auth.ErrInvalidPassword {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "密码错误"})
+	if err == auth.ErrUserNotFound || err == auth.ErrInvalidPassword {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
 		return
 	}
 	if err != nil {
@@ -391,7 +371,7 @@ func (h *Handler) Login(c *gin.Context) {
 	}
 
 	// 设置 cookie
-	c.SetCookie("auth_token", token, int(24*time.Hour.Seconds()), "/", "", false, true)
+	c.SetCookie("auth_token", token, int(24*time.Hour.Seconds()), "/", "", h.tlsEnabled, true)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "登录成功",
@@ -417,7 +397,7 @@ func (h *Handler) GetUserInfo(c *gin.Context) {
 // Logout 用户登出
 func (h *Handler) Logout(c *gin.Context) {
 	// 清除 cookie
-	c.SetCookie("auth_token", "", -1, "/", "", false, true)
+	c.SetCookie("auth_token", "", -1, "/", "", h.tlsEnabled, true)
 	c.JSON(http.StatusOK, gin.H{"message": "登出成功"})
 }
 
@@ -475,6 +455,13 @@ func (h *Handler) UpdateShare(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	fileID := c.Param("file_id")
 
+	// 验证该分享属于当前用户
+	existingShare, err := h.shareMgr.GetShareByFileID(fileID, userID.(int64))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "分享不存在"})
+		return
+	}
+
 	// 检查是否是文件上传
 	fileHeader, err := c.FormFile("file")
 	if err == nil {
@@ -519,36 +506,9 @@ func (h *Handler) UpdateShare(c *gin.Context) {
 		return
 	}
 
-	// 获取原文件信息
-	share, err := h.shareMgr.GetShareByID(0, userID.(int64))
-	if err != nil {
-		// 尝试直接通过 file_id 获取
-		query := `SELECT name FROM files WHERE id = ?`
-		var filename string
-		err := h.db.QueryRow(query, fileID).Scan(&filename)
-		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "分享不存在"})
-			return
-		}
-		filename = req.Filename
-		if filename == "" {
-			filename = "updated_file.txt"
-		}
-		content := []byte(req.Content)
-		mimeType := "text/plain"
-
-		if err := h.shareMgr.UpdateShareContent(fileID, filename, content, mimeType); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "更新失败"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "更新成功"})
-		return
-	}
-
 	filename := req.Filename
-	if filename == "" && share.File != nil {
-		filename = share.File.Name
+	if filename == "" && existingShare.File != nil {
+		filename = existingShare.File.Name
 	}
 	if filename == "" {
 		filename = "updated_file.txt"

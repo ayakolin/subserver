@@ -26,6 +26,14 @@ const (
 	maxHeaderBytes    = 1 << 20           // 最大头部大小 1MB
 )
 
+// contextKey context 键类型（避免使用 string 导致的键冲突）
+type contextKey string
+
+const (
+	ctxKeyAddr      contextKey = "addr"
+	ctxKeyLocalAddr contextKey = "localAddr"
+)
+
 // Server 服务器结构
 type Server struct {
 	config   *config.Config
@@ -72,24 +80,10 @@ func createOptimizedServer(addr string, handler http.Handler) *http.Server {
 		// TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
 		BaseContext: func(listener net.Listener) context.Context {
 			ctx := context.Background()
-			return context.WithValue(ctx, "addr", addr)
+			return context.WithValue(ctx, ctxKeyAddr, addr)
 		},
-		ConnState: func(conn net.Conn, state http.ConnState) {
-			// 连接状态监控
-			switch state {
-			case http.StateNew:
-				// 新连接
-			case http.StateActive:
-				// 连接变为活跃
-			case http.StateIdle:
-				// 连接空闲
-			case http.StateClosed:
-				// 连接关闭
-			}
-		},
-		// 限制并发连接数
 		ConnContext: func(ctx context.Context, c net.Conn) context.Context {
-			return context.WithValue(ctx, "localAddr", c.LocalAddr())
+			return context.WithValue(ctx, ctxKeyLocalAddr, c.LocalAddr())
 		},
 	}
 }
@@ -222,17 +216,23 @@ func optimizeTLSConfig(cfg *tls.Config) *tls.Config {
 	// 启用会话票证缓存
 	cfg.SessionTicketsDisabled = false
 
-	// 设置 ALPN 协议（支持 HTTP/2 和 HTTP/1.1）
-	cfg.NextProtos = []string{"h2", "http/1.1"}
+	// 保留已有的 ALPN 协议（如 CertMagic 设置的 acme-tls/1），确保 h2 和 http/1.1 在前面
+	hasH2 := false
+	for _, p := range cfg.NextProtos {
+		if p == "h2" {
+			hasH2 = true
+			break
+		}
+	}
+	if !hasH2 {
+		cfg.NextProtos = append([]string{"h2", "http/1.1"}, cfg.NextProtos...)
+	}
 
-	// 设置首选密码套件（按性能排序）
+	// 设置首选密码套件（仅 TLS 1.2，TLS 1.3 密码套件由 Go 自动管理）
 	cfg.CipherSuites = []uint16{
-		tls.TLS_AES_128_GCM_SHA256,       // TLS 1.3 - 最佳性能
-		tls.TLS_CHACHA20_POLY1305_SHA256, // TLS 1.3 - 无 AES-NI 时性能好
-		tls.TLS_AES_256_GCM_SHA384,       // TLS 1.3 - 更高安全性
-		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,   // TLS 1.2
-		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,    // TLS 1.2
-		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, // TLS 1.2
+		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 	}
 
 	// 设置首选曲线（X25519 性能最优）

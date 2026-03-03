@@ -179,7 +179,7 @@ func SaveFile(db *sql.DB, file *multipart.FileHeader, once bool, expiresAt *time
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
 	`
 
-	_, err = db.Exec(query, id, file.Filename, content, file.Size, getMimeType(file.Filename), time.Now(), expiresAt, once)
+	_, err = db.Exec(query, id, file.Filename, content, file.Size, GetMimeType(file.Filename), time.Now(), expiresAt, once)
 	if err != nil {
 		return nil, fmt.Errorf("保存文件到数据库失败：%w", err)
 	}
@@ -189,7 +189,7 @@ func SaveFile(db *sql.DB, file *multipart.FileHeader, once bool, expiresAt *time
 		Name:      file.Filename,
 		Content:   content,
 		Size:      file.Size,
-		MimeType:  getMimeType(file.Filename),
+		MimeType:  GetMimeType(file.Filename),
 		CreatedAt: time.Now(),
 		ExpiresAt: expiresAt,
 		Once:      once,
@@ -278,8 +278,8 @@ func GetFile(db *sql.DB, id string) (*FileUpload, error) {
 	return &f, nil
 }
 
-// getMimeType 根据文件扩展名获取 MIME 类型
-func getMimeType(filename string) string {
+// GetMimeType 根据文件扩展名获取 MIME 类型
+func GetMimeType(filename string) string {
 	ext := strings.ToLower(filepath.Ext(filename))
 	switch ext {
 	case ".yaml", ".yml":
@@ -317,9 +317,4 @@ func getMimeType(filename string) string {
 	default:
 		return "text/plain"
 	}
-}
-
-// GetMimeType 根据文件扩展名获取 MIME 类型（导出函数）
-func GetMimeType(filename string) string {
-	return getMimeType(filename)
 }

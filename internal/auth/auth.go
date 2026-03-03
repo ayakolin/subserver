@@ -135,8 +135,16 @@ func (a *Auth) ValidateToken(tokenString string) (*User, error) {
 		return nil, ErrInvalidToken
 	}
 
-	userID := int64(claims["user_id"].(float64))
-	username := claims["username"].(string)
+	userIDFloat, ok := claims["user_id"].(float64)
+	if !ok {
+		return nil, ErrInvalidToken
+	}
+	userID := int64(userIDFloat)
+
+	username, ok := claims["username"].(string)
+	if !ok {
+		return nil, ErrInvalidToken
+	}
 
 	return &User{
 		ID:       userID,

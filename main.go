@@ -195,14 +195,33 @@ func openSQLite(path string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	// SQLite 优化配置（高并发）
-	db.SetMaxOpenConns(100)         // 最大打开连接数
-	db.SetMaxIdleConns(25)          // 最大空闲连接数
+	// SQLite 优化配置：SQLite 为文件级锁，连接数不宜过多
+	db.SetMaxOpenConns(2)           // SQLite 写操作需串行，保持较少连接
+	db.SetMaxIdleConns(2)           // 最大空闲连接数
 	db.SetConnMaxLifetime(30 * time.Minute) // 连接最大生命周期
 	db.SetConnMaxIdleTime(5 * time.Minute)  // 连接最大空闲时间
 
+	// 启用 WAL 模式（支持并发读写）
+	if _, err := db.Exec(`PRAGMA journal_mode=WAL`); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("启用 WAL 模式失败：%w", err)
+	}
+
+	// 设置忙等待超时（避免 SQLITE_BUSY 错误）
+	if _, err := db.Exec(`PRAGMA busy_timeout=5000`); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("设置 busy_timeout 失败：%w", err)
+	}
+
+	// 启用外键约束
+	if _, err := db.Exec(`PRAGMA foreign_keys=ON`); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("启用外键约束失败：%w", err)
+	}
+
 	// 测试连接
 	if err := db.Ping(); err != nil {
+		db.Close()
 		return nil, err
 	}
 
@@ -251,7 +270,6 @@ func initSchema(db *sql.DB) error {
 	);
 
 	-- 索引
-	CREATE INDEX IF NOT EXISTS idx_files_id ON files(id);
 	CREATE INDEX IF NOT EXISTS idx_files_expires ON files(expires_at);
 	CREATE INDEX IF NOT EXISTS idx_shares_user_id ON shares(user_id);
 	CREATE INDEX IF NOT EXISTS idx_shares_file_id ON shares(file_id);
@@ -275,6 +293,7 @@ func newEngine() *gin.Engine {
 	// 使用自定义的 Logger 和 Recovery 中间件
 	engine.Use(gin.LoggerWithWriter(gin.DefaultWriter))
 	engine.Use(gin.CustomRecovery(func(c *gin.Context, recovered any) {
+		log.Printf("panic recovered: %v", recovered)
 		c.AbortWithStatusJSON(500, gin.H{"error": "服务器内部错误"})
 	}))
 
