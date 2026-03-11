@@ -77,7 +77,7 @@ func main() {
 
 	// 显示版本号
 	if *showVersion {
-		fmt.Println("SubServer v1.0.1")
+		fmt.Println("SubServer v1.0.2")
 		return
 	}
 
