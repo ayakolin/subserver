@@ -77,7 +77,7 @@ func main() {
 
 	// 显示版本号
 	if *showVersion {
-		fmt.Println("SubServer v1.0.1")
+		fmt.Println("SubServer v1.0.2")
 		return
 	}
 
@@ -263,6 +263,7 @@ func initSchema(db *sql.DB) error {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		user_id INTEGER NOT NULL,
 		file_id TEXT NOT NULL,
+		name TEXT,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -277,7 +278,37 @@ func initSchema(db *sql.DB) error {
 	`
 
 	_, err := db.Exec(schema)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// 迁移：为已存在的 shares 表添加 name 列
+	if err := migrateAddShareName(db); err != nil {
+		return fmt.Errorf("迁移 shares 表失败：%w", err)
+	}
+
+	return nil
+}
+
+// migrateAddShareName 为 shares 表添加 name 列（如果不存在）
+func migrateAddShareName(db *sql.DB) error {
+	// 检查 name 列是否存在
+	var count int
+	query := `SELECT COUNT(*) FROM pragma_table_info('shares') WHERE name = 'name'`
+	if err := db.QueryRow(query).Scan(&count); err != nil {
+		return err
+	}
+
+	// 如果列不存在，添加它
+	if count == 0 {
+		_, err := db.Exec(`ALTER TABLE shares ADD COLUMN name TEXT`)
+		if err != nil {
+			return err
+		}
+		log.Println("数据库迁移：已添加 shares.name 列")
+	}
+
+	return nil
 }
 
 // ensureDataDir 确保数据目录存在
