@@ -495,7 +495,7 @@
                 <div class="auth-tab" data-tab="register">注册</div>
             </div>
 
-            <div id="message" class="message"></div>
+            <div id="authMessage" class="message"></div>
 
             <!-- 登录表单 -->
             <form id="loginForm" class="auth-form-content">
@@ -586,8 +586,8 @@
                 <textarea id="textContent" placeholder="在这里输入要分享的文本内容..."></textarea>
             </div>
             <div class="form-group">
-                <label for="textFilename">文件名（可选）</label>
-                <input type="text" id="textFilename" placeholder="例如：config.yaml">
+                <label for="textFilename">显示名称（可选）</label>
+                <input type="text" id="textFilename" placeholder="输入分享记录的显示名称...">
             </div>
 
             <div class="options">
@@ -654,6 +654,25 @@
         </div>
     </div>
 
+    <!-- 重命名分享模态框 -->
+    <div id="renameModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>重命名分享</h2>
+                <button class="modal-close" id="closeRenameModal">&times;</button>
+            </div>
+            <div id="renameMessage" class="message"></div>
+            <form id="renameForm">
+                <input type="hidden" id="renameShareId">
+                <div class="form-group">
+                    <label for="renameInput">显示名称</label>
+                    <input type="text" id="renameInput" placeholder="输入新的显示名称..." maxlength="100">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%">保存</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         // 状态管理
         let authToken = localStorage.getItem('auth_token');
@@ -663,6 +682,7 @@
         const authContainer = document.getElementById('authContainer');
         const mainContainer = document.getElementById('mainContainer');
         const messageEl = document.getElementById('message');
+        const authMessageEl = document.getElementById('authMessage');
         const welcomeUserEl = document.getElementById('welcomeUser');
 
         // 初始化
@@ -709,10 +729,12 @@
 
         // 显示消息
         function showMessage(msg, type) {
-            messageEl.textContent = msg;
-            messageEl.className = 'message ' + type;
+            // 根据当前显示的容器选择正确的消息元素
+            const msgEl = mainContainer.classList.contains('hidden') ? authMessageEl : messageEl;
+            msgEl.textContent = msg;
+            msgEl.className = 'message ' + type;
             setTimeout(() => {
-                messageEl.className = 'message';
+                msgEl.className = 'message';
             }, 5000);
         }
 
@@ -886,7 +908,7 @@
         // 文本分享
         document.getElementById('submitTextBtn').addEventListener('click', async () => {
             const content = document.getElementById('textContent').value;
-            const filename = document.getElementById('textFilename').value || 'text.txt';
+            const shareName = document.getElementById('textFilename').value.trim();
 
             if (!content.trim()) {
                 showMessage('请输入内容', 'error');
@@ -895,7 +917,13 @@
 
             const blob = new Blob([content], { type: 'text/plain' });
             const formData = new FormData();
-            formData.append('file', blob, filename);
+            // 文本内容使用固定文件名，不触发扩展名校验
+            formData.append('file', blob, 'content.txt');
+
+            // 如果提供了显示名称，添加到表单
+            if (shareName) {
+                formData.append('share_name', shareName);
+            }
 
             const once = document.getElementById('textOnceCheckbox').checked;
             const expire = document.getElementById('textExpireCheckbox').checked;
@@ -955,7 +983,7 @@
                     listEl.innerHTML = data.shares.map(share => `
                         <div class="share-item">
                             <div class="share-info">
-                                <div class="share-name">${escapeHtml(share.file_name) || '未命名文件'}</div>
+                                <div class="share-name">${escapeHtml(share.share_name) || escapeHtml(share.file_name) || '未命名文件'}</div>
                                 <div class="share-meta">
                                     ${formatFileSize(share.file_size)} •
                                     创建于 ${formatDate(share.created_at)}
@@ -964,6 +992,7 @@
                             <div class="share-actions">
                                 <button class="btn btn-secondary btn-sm" onclick="viewShare('${share.file_id}')">查看</button>
                                 <button class="btn btn-primary btn-sm" onclick="editShare('${share.file_id}')">编辑</button>
+                                <button class="btn btn-secondary btn-sm" onclick="renameShare(${share.id}, '${escapeHtml(share.share_name || share.file_name || '').replace(/'/g, "\\'")}')">重命名</button>
                                 <button class="btn btn-secondary btn-sm" onclick="copyShareLink('${share.raw_url}')">复制</button>
                                 <button class="btn btn-danger btn-sm" onclick="deleteShare(${share.id}, '${share.file_id}')">删除</button>
                             </div>
@@ -1082,6 +1111,63 @@
             navigator.clipboard.writeText(url).then(() => {
                 showMessage('链接已复制', 'success');
             });
+        }
+
+        // 重命名分享
+        function renameShare(shareId, currentName) {
+            document.getElementById('renameShareId').value = shareId;
+            document.getElementById('renameInput').value = currentName === '未命名文件' ? '' : currentName;
+            document.getElementById('renameModal').classList.add('show');
+        }
+
+        // 关闭重命名模态框
+        document.getElementById('closeRenameModal').addEventListener('click', () => {
+            document.getElementById('renameModal').classList.remove('show');
+            document.getElementById('renameForm').reset();
+        });
+
+        // 提交重命名
+        document.getElementById('renameForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const shareId = document.getElementById('renameShareId').value;
+            const name = document.getElementById('renameInput').value.trim();
+
+            if (!name) {
+                showRenameMessage('名称不能为空', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/share/' + shareId + '/rename', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: name })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showMessage('重命名成功', 'success');
+                    document.getElementById('renameModal').classList.remove('show');
+                    document.getElementById('renameForm').reset();
+                    loadShares();
+                } else {
+                    showRenameMessage(data.error || '重命名失败', 'error');
+                }
+            } catch (e) {
+                showRenameMessage('网络错误', 'error');
+            }
+        });
+
+        // 显示重命名消息
+        function showRenameMessage(msg, type) {
+            const msgEl = document.getElementById('renameMessage');
+            msgEl.textContent = msg;
+            msgEl.className = 'message ' + type;
+            setTimeout(() => {
+                msgEl.className = 'message';
+            }, 5000);
         }
 
         // 删除分享

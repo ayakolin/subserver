@@ -219,7 +219,12 @@ func (h *Handler) Upload(c *gin.Context) {
 
 	// 如果是登录用户，创建分享记录
 	if userID > 0 {
-		_, _ = h.shareMgr.CreateShare(userID, result.Upload.ID)
+		// 优先使用传入的 share_name，否则使用文件名
+		shareName := c.PostForm("share_name")
+		if shareName == "" {
+			shareName = result.Upload.Name
+		}
+		_, _ = h.shareMgr.CreateShare(userID, result.Upload.ID, shareName)
 	}
 
 	// 返回分享链接
@@ -405,6 +410,7 @@ func (h *Handler) Logout(c *gin.Context) {
 type ShareListItem struct {
 	ID        int64     `json:"id"`
 	FileID    string    `json:"file_id"`
+	ShareName string    `json:"share_name"` // 分享显示名称
 	FileName  string    `json:"file_name"`
 	FileSize  int64     `json:"file_size"`
 	RawURL    string    `json:"raw_url"`
@@ -428,6 +434,7 @@ func (h *Handler) GetUserShares(c *gin.Context) {
 		item := ShareListItem{
 			ID:        s.ID,
 			FileID:    s.FileID,
+			ShareName: s.Name,
 			ShareURL:  host + "/share/" + s.FileID,
 			CreatedAt: s.CreatedAt,
 		}
@@ -544,6 +551,46 @@ func (h *Handler) DeleteShare(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }
 
+// RenameShareRequest 重命名分享请求
+type RenameShareRequest struct {
+	Name string `json:"name" binding:"required"`
+}
+
+// RenameShare 重命名分享
+func (h *Handler) RenameShare(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	shareIDStr := c.Param("id")
+
+	shareID, err := strconv.ParseInt(shareIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的分享 ID"})
+		return
+	}
+
+	var req RenameShareRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "请求参数错误"})
+		return
+	}
+
+	// 验证名称长度
+	if len(req.Name) == 0 || len(req.Name) > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "名称长度必须在 1-100 个字符之间"})
+		return
+	}
+
+	if err := h.shareMgr.UpdateShareName(shareID, userID.(int64), req.Name); err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "分享不存在或无权限"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "重命名失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "重命名成功"})
+}
+
 // GetShareDetail 获取分享详情
 func (h *Handler) GetShareDetail(c *gin.Context) {
 	userID, _ := c.Get("user_id")
@@ -630,6 +677,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 		api.GET("/api/user/shares", h.GetUserShares)
 		api.GET("/api/share/:file_id", h.GetShareDetail)
 		api.POST("/api/share/:file_id/update", h.UpdateShare)
+		api.PUT("/api/share/:id/rename", h.RenameShare)
 		api.DELETE("/api/share/:id", h.DeleteShare)
 	}
 }
