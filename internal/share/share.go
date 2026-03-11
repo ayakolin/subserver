@@ -10,6 +10,7 @@ type Share struct {
 	ID        int64
 	UserID    int64
 	FileID    string
+	Name      string // 分享显示名称
 	File      *ShareFile
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -40,9 +41,9 @@ func NewManager(db *sql.DB) *Manager {
 }
 
 // CreateShare 创建分享
-func (m *Manager) CreateShare(userID int64, fileID string) (*Share, error) {
-	query := `INSERT INTO shares (user_id, file_id, created_at, updated_at) VALUES (?, ?, ?, ?)`
-	result, err := m.db.Exec(query, userID, fileID, time.Now(), time.Now())
+func (m *Manager) CreateShare(userID int64, fileID string, name string) (*Share, error) {
+	query := `INSERT INTO shares (user_id, file_id, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`
+	result, err := m.db.Exec(query, userID, fileID, name, time.Now(), time.Now())
 	if err != nil {
 		return nil, err
 	}
@@ -56,6 +57,7 @@ func (m *Manager) CreateShare(userID int64, fileID string) (*Share, error) {
 		ID:        id,
 		UserID:    userID,
 		FileID:    fileID,
+		Name:      name,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}, nil
@@ -64,7 +66,7 @@ func (m *Manager) CreateShare(userID int64, fileID string) (*Share, error) {
 // GetUserShares 获取用户的所有分享
 func (m *Manager) GetUserShares(userID int64) ([]*Share, error) {
 	query := `
-	SELECT s.id, s.user_id, s.file_id, s.created_at, s.updated_at,
+	SELECT s.id, s.user_id, s.file_id, s.name, s.created_at, s.updated_at,
 	       f.name, f.size, f.mime_type, f.read_count
 	FROM shares s
 	LEFT JOIN files f ON s.file_id = f.id
@@ -81,6 +83,7 @@ func (m *Manager) GetUserShares(userID int64) ([]*Share, error) {
 	var shares []*Share
 	for rows.Next() {
 		var share Share
+		var shareName sql.NullString
 		var fileName sql.NullString
 		var fileSize sql.NullInt64
 		var mimeType sql.NullString
@@ -90,6 +93,7 @@ func (m *Manager) GetUserShares(userID int64) ([]*Share, error) {
 			&share.ID,
 			&share.UserID,
 			&share.FileID,
+			&shareName,
 			&share.CreatedAt,
 			&share.UpdatedAt,
 			&fileName,
@@ -99,6 +103,10 @@ func (m *Manager) GetUserShares(userID int64) ([]*Share, error) {
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		if shareName.Valid {
+			share.Name = shareName.String
 		}
 
 		if fileName.Valid {
@@ -240,6 +248,26 @@ func (m *Manager) UpdateShareContent(fileID string, name string, content []byte,
 	query := `UPDATE files SET name = ?, content = ?, mime_type = ? WHERE id = ?`
 	_, err := m.db.Exec(query, name, content, mimeType, fileID)
 	return err
+}
+
+// UpdateShareName 更新分享显示名称
+func (m *Manager) UpdateShareName(shareID int64, userID int64, name string) error {
+	query := `UPDATE shares SET name = ?, updated_at = ? WHERE id = ? AND user_id = ?`
+	result, err := m.db.Exec(query, name, time.Now(), shareID, userID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }
 
 // DeleteShare 删除分享及关联文件
