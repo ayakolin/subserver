@@ -76,6 +76,7 @@ jobs:
           path: |
             ${{ env.asset_path }}
             ${{ env.checksum_path }}
+          retention-days: 3
 
   release:
     runs-on: ubuntu-latest
